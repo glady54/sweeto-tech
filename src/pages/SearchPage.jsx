@@ -28,7 +28,7 @@ const SearchPage = () => {
     return (
       (product.name || '').toLowerCase().includes(searchTerm) ||
       categoryName.toLowerCase().includes(searchTerm) ||
-      (product.tagline || '').toLowerCase().includes(searchTerm) ||
+      (product.tagline || '').toLowerCase().includes(searchTerm)
     );
   });
 

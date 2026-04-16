@@ -38,6 +38,7 @@ import StoreSettingsPage from './pages/admin/StoreSettingsPage';
 import StockManagementPage from './pages/admin/StockManagementPage';
 import SalesHistoryPage from './pages/admin/SalesHistoryPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
+import MigratePage from './pages/admin/MigratePage';
 
 const AnalyticsTracker = () => {
   const location = useLocation();
@@ -149,6 +150,7 @@ function App() {
                     <Route path="stock" element={<StockManagementPage />} />
                     <Route path="sales" element={<SalesHistoryPage />} />
                     <Route path="settings" element={<StoreSettingsPage />} />
+                    <Route path="migrate" element={<MigratePage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                   </Route>
 

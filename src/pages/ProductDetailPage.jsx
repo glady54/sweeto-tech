@@ -4,7 +4,9 @@ import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../contexts/ToastContext';
 import { useStoreData } from '../contexts/StoreDataContext';
-import { ChevronLeft, Plus, Minus, ShoppingCart, X, Maximize2, Heart } from 'lucide-react';
+import { ChevronLeft, Plus, Minus, ShoppingCart, X, Maximize2, Heart, MessageCircle } from 'lucide-react';
+import WhatsAppButton from '../components/WhatsAppButton';
+
 
 const ProductDetailPage = () => {
   const { productId } = useParams();
@@ -163,6 +165,8 @@ const ProductDetailPage = () => {
                 <ShoppingCart size={24} />
                 <span>Add to Cart</span>
               </button>
+              
+              <WhatsAppButton product={product} />
               
               <button
                 onClick={() => {

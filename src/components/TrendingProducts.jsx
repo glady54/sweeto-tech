@@ -4,7 +4,9 @@ import { useStoreData } from '../contexts/StoreDataContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../contexts/ToastContext';
-import { ShoppingCart, Star, Heart, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Star, Heart, ArrowRight, MessageCircle } from 'lucide-react';
+import WhatsAppButton from './WhatsAppButton';
+
 
 const TrendingProducts = () => {
   const { products, formatPrice } = useStoreData();
@@ -102,6 +104,8 @@ const TrendingProducts = () => {
                 >
                   <ShoppingCart size={18} />
                 </button>
+                <WhatsAppButton product={product} iconOnly={true} />
+
               </div>
 
               {/* Badge */}

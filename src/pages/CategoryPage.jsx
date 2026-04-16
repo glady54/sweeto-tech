@@ -4,7 +4,9 @@ import { useStoreData } from '../contexts/StoreDataContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../contexts/ToastContext';
-import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Heart, ShoppingCart, Eye, MessageCircle } from 'lucide-react';
+import WhatsAppButton from '../components/WhatsAppButton';
+
 
 const CategoryPage = () => {
   const { categoryName } = useParams();
@@ -96,6 +98,8 @@ const CategoryPage = () => {
                     >
                       <ShoppingCart size={16} />
                     </button>
+                    <WhatsAppButton product={product} iconOnly={true} className="w-9 h-9" />
+
                     <Link 
                       to={`/product/${product.id}`}
                       className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"

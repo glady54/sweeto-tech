@@ -1,11 +1,21 @@
 import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { Heart, ShoppingCart, Eye, MessageCircle } from 'lucide-react';
+import { useWishlist } from '../contexts/WishlistContext';
+import { useCart } from '../contexts/CartContext';
+import { useToast } from '../contexts/ToastContext';
+import WhatsAppButton from '../components/WhatsAppButton';
 import { useStoreData } from '../contexts/StoreDataContext';
+
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const { products, categories, formatPrice } = useStoreData();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addToCart } = useCart();
+  const { showToast } = useToast();
+
 
   const searchResults = products.filter(product => {
     if (product.status !== 'active') return false;
@@ -49,10 +59,44 @@ const SearchPage = () => {
                     />
                   </Link>
                   {product.badge && (
-                    <span className="absolute top-3 right-3 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full font-semibold shadow-lg">
+                    <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow-lg uppercase tracking-widest z-10">
                       {product.badge}
                     </span>
                   )}
+
+                  {/* Quick Actions (Floating Circles) */}
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                    <button 
+                      onClick={() => {
+                        toggleWishlist(product);
+                        if (!isInWishlist(product.id)) showToast(`Added ${product.name} to wishlist`);
+                      }}
+                      className={`w-9 h-9 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isInWishlist(product.id) 
+                          ? 'bg-red-500 text-white border-red-500' 
+                          : 'bg-white text-slate-900 border-white hover:bg-blue-600 hover:text-white'
+                      }`}
+                    >
+                      <Heart size={16} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        addToCart(product);
+                        showToast(`Added ${product.name} to cart`);
+                      }}
+                      className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"
+                    >
+                      <ShoppingCart size={16} />
+                    </button>
+                    <WhatsAppButton product={product} iconOnly={true} className="w-9 h-9" />
+                    <Link 
+                      to={`/product/${product.id}`}
+                      className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"
+                    >
+                      <Eye size={16} />
+                    </Link>
+                  </div>
+
                 </div>
                 <div className="p-5">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">

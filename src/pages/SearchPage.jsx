@@ -1,0 +1,114 @@
+import React from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { useStoreData } from '../contexts/StoreDataContext';
+
+const SearchPage = () => {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q') || '';
+  const { products, categories, formatPrice } = useStoreData();
+
+  const searchResults = products.filter(product => {
+    if (product.status !== 'active') return false;
+    
+    const categoryName = categories.find(c => c.id === product.categoryId)?.name || '';
+    const searchTerm = query.toLowerCase();
+    
+    return (
+      (product.name || '').toLowerCase().includes(searchTerm) ||
+      categoryName.toLowerCase().includes(searchTerm) ||
+      (product.tagline || '').toLowerCase().includes(searchTerm) ||
+      (product.description || '').toLowerCase().includes(searchTerm)
+    );
+  });
+
+  return (
+    <div className="py-8 bg-gray-50 dark:bg-slate-950 min-h-screen transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Search Header */}
+        <div className="mb-8 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Results</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {searchResults.length} products found for <span className="text-blue-600 dark:text-blue-400 font-bold">"{query}"</span>
+          </p>
+        </div>
+
+        {/* Results */}
+        {searchResults.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {searchResults.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-slate-800 group"
+              >
+                <div className="relative overflow-hidden">
+                  <Link to={`/product/${product.id}`}>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </Link>
+                  {product.badge && (
+                    <span className="absolute top-3 right-3 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-full font-semibold shadow-lg">
+                      {product.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">
+                    <Link to={`/product/${product.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      {product.name}
+                    </Link>
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2 h-10">{product.tagline}</p>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
+                    <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                      {formatPrice(product.price)}
+                    </span>
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 shadow-sm">
+            <div className="text-gray-300 dark:text-slate-700 mb-6 flex justify-center">
+              <svg className="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No products found for your search</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
+              Try searching with different keywords or browse our categories to find what you're looking for.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <Link
+                to="/"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 dark:shadow-none translate-y-0 hover:-translate-y-1"
+              >
+                Back to Home
+              </Link>
+              <Link
+                to="/category/Smart Phones"
+                className="bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-900 dark:text-white border border-gray-300 dark:border-slate-700 px-8 py-3 rounded-xl font-bold transition-all"
+              >
+                Browse Categories
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SearchPage;
+

@@ -1,22 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import HeroBanner from '../components/HeroBanner';
-import TopCategories from '../components/TopCategories';
-import FeaturedProducts from '../components/FeaturedProducts';
+import QuickLinksBar from '../components/QuickLinksBar';
+import FeaturedProductsGrid from '../components/FeaturedProductsGrid';
+import JustArrivedSection from '../components/JustArrivedSection';
+import CategoryBanners from '../components/CategoryBanners';
 import TrendingProducts from '../components/TrendingProducts';
 import { updateSEO } from '../utils/seoHelper';
-import { useEffect } from 'react';
 
 const HomePage = () => {
   useEffect(() => {
-    updateSEO(); // Uses defaults for home
+    updateSEO();
   }, []);
 
   return (
-    <div className="flex flex-col gap-8 lg:gap-16 py-8 pb-20">
+    <div className="flex flex-col gap-10 pb-20 bg-gray-50 dark:bg-slate-950 transition-colors">
+      {/* Hero stays as-is */}
       <HeroBanner />
-      <TopCategories />
-      <FeaturedProducts />
-      <TrendingProducts />
+
+      {/* Section wrapper on a light background */}
+      <div className="flex flex-col gap-10">
+        {/* 1. Quick links: Best Sellers, New Arrivals, Top Rated, On Sale */}
+        <QuickLinksBar />
+
+        {/* 2. Featured Products with tabs + promo card */}
+        <FeaturedProductsGrid />
+
+        {/* 3. Just Arrived horizontal strip + discount banner */}
+        <JustArrivedSection />
+
+        {/* 4. Category promo banners (3 wide cards) */}
+        <CategoryBanners />
+
+        {/* 5. Trending / More Products */}
+        <TrendingProducts />
+      </div>
     </div>
   );
 };

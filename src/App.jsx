@@ -1,5 +1,6 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 // Providers
 import { CartProvider } from './contexts/CartContext';
@@ -8,6 +9,9 @@ import { ToastProvider } from './contexts/ToastContext';
 import { LocaleProvider } from './contexts/LocaleContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { AdminLocaleProvider } from './contexts/AdminLocaleContext';
+
+// Analytics
+import analyticsService from './utils/analyticsService';
 
 // Components
 import Header from './components/Header';
@@ -33,6 +37,20 @@ import CategoryManagerPage from './pages/admin/CategoryManagerPage';
 import StoreSettingsPage from './pages/admin/StoreSettingsPage';
 import StockManagementPage from './pages/admin/StockManagementPage';
 import SalesHistoryPage from './pages/admin/SalesHistoryPage';
+import AnalyticsPage from './pages/admin/AnalyticsPage';
+
+const AnalyticsTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Only log paths that are not the admin panel
+    if (!location.pathname.startsWith('/admin')) {
+      analyticsService.logVisit(location.pathname);
+    }
+  }, [location]);
+
+  return null;
+};
 
 function App() {
   return (
@@ -42,6 +60,7 @@ function App() {
           <CartProvider>
             <AdminLocaleProvider>
               <AdminAuthProvider>
+                <AnalyticsTracker />
                 <Routes>
                   {/* Storefront Routes */}
                   <Route path="/" element={
@@ -130,6 +149,7 @@ function App() {
                     <Route path="stock" element={<StockManagementPage />} />
                     <Route path="sales" element={<SalesHistoryPage />} />
                     <Route path="settings" element={<StoreSettingsPage />} />
+                    <Route path="analytics" element={<AnalyticsPage />} />
                   </Route>
 
                   {/* Universal Fallback */}

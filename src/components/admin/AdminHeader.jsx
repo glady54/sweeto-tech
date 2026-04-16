@@ -4,7 +4,7 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { LogOut, Globe, Settings, Package, Grid3x3, Home, Sun, Moon, Warehouse, Receipt } from 'lucide-react';
+import { LogOut, Globe, Settings, Package, Grid3x3, Home, Sun, Moon, Warehouse, Receipt, MousePointer2 } from 'lucide-react';
 
 const AdminHeader = () => {
   const { user, logout } = useAdminAuth();
@@ -54,6 +54,7 @@ const AdminHeader = () => {
               { to: '/admin/categories', icon: Grid3x3, label: t('categoryManagement') },
               { to: '/admin/stock', icon: Warehouse, label: t('stockManagement') },
               { to: '/admin/sales', icon: Receipt, label: t('salesHistory') },
+              { to: '/admin/analytics', icon: MousePointer2, label: 'Analytics' },
               { to: '/admin/settings', icon: Settings, label: t('storeSettings') },
             ].map((item) => (
               <Link
@@ -120,6 +121,7 @@ const AdminHeader = () => {
             { to: '/admin/categories', icon: Grid3x3, label: t('categoryManagement') },
             { to: '/admin/stock', icon: Warehouse, label: t('stockManagement') },
             { to: '/admin/sales', icon: Receipt, label: t('salesHistory') },
+            { to: '/admin/analytics', icon: MousePointer2, label: 'Analytics' },
             { to: '/admin/settings', icon: Settings, label: t('storeSettings') },
           ].map((item) => (
             <Link

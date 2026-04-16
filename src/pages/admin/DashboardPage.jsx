@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { useStoreData } from '../../contexts/StoreDataContext';
-import { Package, Grid3x3, Settings, Plus, Edit, Trash2, TrendingUp, Users, ShoppingCart, Warehouse, Receipt, AlertTriangle } from 'lucide-react';
+import { Package, Grid3x3, Settings, Plus, Edit, Trash2, TrendingUp, Users, ShoppingCart, Warehouse, Receipt, AlertTriangle, MousePointer2 } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user } = useAdminAuth();
   const { t } = useAdminLocale();
-  const { products, categories, storeSettings, formatPrice, salesRecords } = useStoreData();
+  const { products, categories, storeSettings, formatPrice, salesRecords, visits } = useStoreData();
 
   const lowStockProducts = products.filter(p => (p.lowStockThreshold || 0) > 0 && (p.stockQuantity || 0) <= (p.lowStockThreshold || 0));
 
@@ -18,7 +18,8 @@ const DashboardPage = () => {
     totalCategories: categories.length,
     totalOrders: salesRecords.length,
     totalRevenue: salesRecords.reduce((sum, r) => sum + (r.totalPrice || 0), 0),
-    lowStockCount: lowStockProducts.length
+    lowStockCount: lowStockProducts.length,
+    totalVisits: visits.length
   };
 
   const quickActions = [
@@ -56,6 +57,13 @@ const DashboardPage = () => {
       icon: Settings,
       link: '/admin/settings',
       color: 'bg-slate-500'
+    },
+    {
+      title: 'Analytics',
+      description: 'View visitor traffic & sources',
+      icon: MousePointer2,
+      link: '/admin/analytics',
+      color: 'bg-indigo-500'
     }
   ];
 
@@ -123,6 +131,18 @@ const DashboardPage = () => {
               <div className="ml-5">
                 <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-1">Total Sales</p>
                 <p className="text-3xl font-black text-gray-900 dark:text-white font-mono">{stats.totalOrders}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-slate-800 group">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-4 group-hover:scale-110 transition-transform">
+                <MousePointer2 className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="ml-5">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-1">Total Visits</p>
+                <p className="text-3xl font-black text-gray-900 dark:text-white font-mono">{stats.totalVisits}</p>
               </div>
             </div>
           </div>

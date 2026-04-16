@@ -19,6 +19,7 @@ export const StoreDataProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [stockAdjustments, setStockAdjustments] = useState([]);
   const [salesRecords, setSalesRecords] = useState([]);
+  const [visits, setVisits] = useState([]);
   const [storeSettings, setStoreSettings] = useState({
     shopName: 'Sweeto-Tech',
     shopLogo: '',
@@ -40,12 +41,13 @@ export const StoreDataProvider = ({ children }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, catRes, setRes, adjRes, salesRes] = await Promise.all([
+        const [prodRes, catRes, setRes, adjRes, salesRes, visitRes] = await Promise.all([
           fetch(`${API_URL}/products`),
           fetch(`${API_URL}/categories`),
           fetch(`${API_URL}/storeSettings`),
           fetch(`${API_URL}/stockAdjustments`),
-          fetch(`${API_URL}/salesRecords`)
+          fetch(`${API_URL}/salesRecords`),
+          fetch(`${API_URL}/visits`)
         ]);
         
         if (prodRes.ok) setProducts(await prodRes.json());
@@ -61,6 +63,7 @@ export const StoreDataProvider = ({ children }) => {
         }
         if (adjRes.ok) setStockAdjustments(await adjRes.json());
         if (salesRes.ok) setSalesRecords(await salesRes.json());
+        if (visitRes.ok) setVisits(await visitRes.json());
       } catch (error) {
         console.error("Failed to fetch from Local API", error);
       }
@@ -303,6 +306,7 @@ export const StoreDataProvider = ({ children }) => {
     storeSettings,
     stockAdjustments,
     salesRecords,
+    visits,
     addProduct,
     updateProduct,
     deleteProduct,

@@ -190,6 +190,7 @@ const ProductManagerPage = () => {
       return;
     }
 
+    const payload = {
       ...formData,
       price: parseFloat(formData.price),
       originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null

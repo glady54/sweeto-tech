@@ -6,6 +6,8 @@ import { useToast } from '../contexts/ToastContext';
 import { useStoreData } from '../contexts/StoreDataContext';
 import { ChevronLeft, Plus, Minus, ShoppingCart, X, Maximize2, Heart, MessageCircle } from 'lucide-react';
 import WhatsAppButton from '../components/WhatsAppButton';
+import { updateSEO } from '../utils/seoHelper';
+import { useEffect } from 'react';
 
 
 const ProductDetailPage = () => {
@@ -20,6 +22,17 @@ const ProductDetailPage = () => {
   
   const product = products.find(p => p.id === productId || p.id.toString() === productId);
   const category = categories.find(c => c.id === product?.categoryId);
+
+  useEffect(() => {
+    if (product) {
+      updateSEO({
+        title: `${product.name} | Sweeto Hubs`,
+        description: product.tagline || product.description?.substring(0, 160),
+        image: product.image,
+        type: 'product'
+      });
+    }
+  }, [product]);
 
   if (!product || product.status !== 'active' || product.stockQuantity <= 0) {
     return (
@@ -110,18 +123,32 @@ const ProductDetailPage = () => {
 
           {/* Product Details */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-100 dark:border-slate-800 shadow-sm">
-            {product.badge && (
-              <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full mb-4 inline-block font-bold">
-                {product.badge}
-              </span>
-            )}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="bg-red-500 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-lg uppercase tracking-widest animate-pulse">
+                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                </span>
+              )}
+              {product.badge && (
+                <span className="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-lg uppercase tracking-widest">
+                  {product.badge}
+                </span>
+              )}
+            </div>
             
             <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
             
             <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">{product.tagline}</p>
             
-            <div className="text-4xl font-black text-blue-600 dark:text-blue-400 mb-8">
-              {formatPrice(product.price)}
+            <div className="flex items-end gap-3 mb-8">
+              <div className="text-4xl font-black text-blue-600 dark:text-blue-400">
+                {formatPrice(product.price)}
+              </div>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <div className="text-xl font-bold text-gray-400 dark:text-gray-500 line-through mb-1">
+                  {formatPrice(product.originalPrice)}
+                </div>
+              )}
             </div>
 
             <div className="mb-8 p-6 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-800">

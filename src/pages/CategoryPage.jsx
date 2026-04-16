@@ -6,6 +6,8 @@ import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../contexts/ToastContext';
 import { Heart, ShoppingCart, Eye, MessageCircle } from 'lucide-react';
 import WhatsAppButton from '../components/WhatsAppButton';
+import { updateSEO } from '../utils/seoHelper';
+import { useEffect } from 'react';
 
 
 const CategoryPage = () => {
@@ -41,6 +43,14 @@ const CategoryPage = () => {
     return false;
   });
 
+  useEffect(() => {
+    updateSEO({
+      title: `${decodeURIComponent(categoryName)} | Sweeto Hubs`,
+      description: `Explore the best selection of ${decodeURIComponent(categoryName)} at Sweeto Hubs. Cyber-premium electronics delivered to you.`,
+      type: 'website'
+    });
+  }, [categoryName]);
+
   return (
     <div className="py-8 bg-gray-50 dark:bg-slate-950 min-h-screen transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,11 +78,18 @@ const CategoryPage = () => {
                       className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                   </Link>
-                  {product.badge && (
-                    <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow-lg uppercase tracking-widest z-10">
-                      {product.badge}
-                    </span>
-                  )}
+                  <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+                    {product.originalPrice && product.originalPrice > product.price && (
+                      <span className="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg uppercase tracking-widest animate-pulse">
+                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      </span>
+                    )}
+                    {product.badge && (
+                      <span className="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow-lg uppercase tracking-widest">
+                        {product.badge}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Quick Actions (Floating Circles) */}
                   <div className="absolute top-3 right-3 flex flex-col gap-2 translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 z-10">
@@ -116,9 +133,16 @@ const CategoryPage = () => {
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2 h-10">{product.tagline}</p>
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
-                    <span className="text-xl font-black text-blue-600 dark:text-blue-400">
-                      {formatPrice(product.price)}
-                    </span>
+                    <div className="flex flex-col">
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="text-[10px] font-bold text-gray-400 line-through mb-0.5">
+                          {formatPrice(product.originalPrice)}
+                        </span>
+                      )}
+                      <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                        {formatPrice(product.price)}
+                      </span>
+                    </div>
                     <Link
                       to={`/product/${product.id}`}
                       className="text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 transition-colors"

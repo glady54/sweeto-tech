@@ -109,13 +109,18 @@ const TrendingProducts = () => {
               </div>
 
               {/* Badge */}
-              {product.badge && (
-                <div className="absolute top-4 left-4">
+              <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-xl animate-pulse">
+                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                  </span>
+                )}
+                {product.badge && (
                   <span className="bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-xl">
                     {product.badge}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Info */}
@@ -139,10 +144,12 @@ const TrendingProducts = () => {
               
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <span className="text-[10px] font-bold text-slate-400 line-through">
+                      {formatPrice(product.originalPrice)}
+                    </span>
+                  )}
                   <span className="text-xl font-black text-blue-600">{formatPrice(product.price)}</span>
-                  <span className="text-[10px] font-bold text-slate-400 line-through">
-                    {formatPrice(product.price * 1.2)}
-                  </span>
                 </div>
                 <Link to={`/product/${product.id}`} className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center group-hover:bg-blue-600 transition-colors">
                   <ArrowRight size={18} />

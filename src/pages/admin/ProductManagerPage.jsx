@@ -19,6 +19,7 @@ const ProductManagerPage = () => {
     status: 'active',
     description: '',
     image: '',
+    originalPrice: '',
     additionalImages: []
   });
 
@@ -73,7 +74,7 @@ const ProductManagerPage = () => {
 
   const openAddForm = () => {
     setEditingProduct(null);
-    setFormData({ name: '', price: '', categoryId: '', status: 'active', description: '', image: '', additionalImages: [] });
+    setFormData({ name: '', price: '', categoryId: '', status: 'active', description: '', image: '', originalPrice: '', additionalImages: [] });
     setError('');
     setSuccess('');
     setShowForm(true);
@@ -86,7 +87,8 @@ const ProductManagerPage = () => {
       categoryId: product.categoryId || '',
       status: product.status || 'active',
       description: product.description || '',
-      image: product.image || ''
+      image: product.image || '',
+      originalPrice: product.originalPrice || ''
     });
     setEditingProduct(product);
     setError('');
@@ -98,7 +100,7 @@ const ProductManagerPage = () => {
   const closeForm = () => {
     setShowForm(false);
     setEditingProduct(null);
-    setFormData({ name: '', price: '', categoryId: '', status: 'active', description: '', image: '' });
+    setFormData({ name: '', price: '', categoryId: '', status: 'active', description: '', image: '', originalPrice: '' });
     setError('');
     setSuccess('');
     setAiSuggestion('');
@@ -188,9 +190,9 @@ const ProductManagerPage = () => {
       return;
     }
 
-    const payload = {
       ...formData,
-      price: parseFloat(formData.price)
+      price: parseFloat(formData.price),
+      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null
     };
 
     if (editingProduct) {
@@ -278,8 +280,25 @@ const ProductManagerPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1" htmlFor="categoryId">Category *</label>
-                  <select
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1" htmlFor="originalPrice">Original Price (Optional)</label>
+                  <input
+                    type="number"
+                    name="originalPrice"
+                    id="originalPrice"
+                    step="0.01"
+                    value={formData.originalPrice}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 599.99"
+                    autoComplete="off"
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                   <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1" htmlFor="categoryId">Category *</label>
+                   <select
                     name="categoryId"
                     id="categoryId"
                     value={formData.categoryId}
@@ -293,24 +312,23 @@ const ProductManagerPage = () => {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1">Status</label>
-                <div className="flex gap-4">
-                  {['active', 'draft'].map(status => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => setFormData(p => ({ ...p, status }))}
-                      className={`flex-1 py-4 px-6 rounded-2xl border-2 transition-all capitalize font-black tracking-widest text-xs ${formData.status === status
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 shadow-lg shadow-blue-500/10'
-                          : 'border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50 text-gray-400 dark:text-slate-600 hover:border-gray-200 dark:hover:border-slate-700'
-                        }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1">Status</label>
+                  <div className="flex gap-4">
+                    {['active', 'draft'].map(status => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, status }))}
+                        className={`flex-1 py-4 px-6 rounded-2xl border-2 transition-all capitalize font-black tracking-widest text-xs ${formData.status === status
+                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 shadow-lg shadow-blue-500/10'
+                            : 'border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50 text-gray-400 dark:text-slate-600 hover:border-gray-200 dark:hover:border-slate-700'
+                          }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

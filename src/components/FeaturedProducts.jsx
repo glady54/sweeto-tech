@@ -48,7 +48,12 @@ const FeaturedProducts = () => {
               </Link>
               
               {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
+              <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg animate-pulse">
+                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                  </span>
+                )}
                 {product.badge && (
                   <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">
                     {product.badge}
@@ -103,9 +108,16 @@ const FeaturedProducts = () => {
                 {product.name}
               </Link>
               <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50">
-                <span className="text-lg font-black text-blue-600">
-                  {formatPrice(product.price)}
-                </span>
+                <div className="flex flex-col">
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <span className="text-[10px] font-bold text-slate-400 line-through mb-0.5">
+                      {formatPrice(product.originalPrice)}
+                    </span>
+                  )}
+                  <span className="text-lg font-black text-blue-600">
+                    {formatPrice(product.price)}
+                  </span>
+                </div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase">
                   In Stock
                 </span>

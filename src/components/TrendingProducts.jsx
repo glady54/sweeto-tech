@@ -67,15 +67,15 @@ const TrendingProducts = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {filteredProducts.map((product) => (
-          <div key={product.id} className="group flex flex-col transition-all duration-300">
+          <div key={product.id} className="group flex flex-col h-full transition-all duration-300">
             {/* Image Container */}
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-slate-50 border border-slate-100 mb-6">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-slate-50 border border-slate-100 mb-6 flex-shrink-0">
               <Link to={`/product/${product.id}`} className="block h-full w-full p-8">
-                <div className="image-straight">
+                <div className="w-full h-full">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
                   />
                 </div>
               </Link>
@@ -105,7 +105,6 @@ const TrendingProducts = () => {
                   <ShoppingCart size={18} />
                 </button>
                 <WhatsAppButton product={product} iconOnly={true} />
-
               </div>
 
               {/* Badge */}
@@ -124,7 +123,7 @@ const TrendingProducts = () => {
             </div>
 
             {/* Info */}
-            <div className="px-2">
+            <div className="px-2 flex-1 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex text-yellow-400">
                   <Star size={12} className="fill-current" />
@@ -134,24 +133,24 @@ const TrendingProducts = () => {
                   <Star size={12} className="fill-current opacity-30" />
                 </div>
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  ({product.reviewsCount || (parseInt(String(product.id).slice(-2)) || 0) + 15} Reviews)
+                  ({product.reviewsCount || (parseInt(String(product.id).slice(-2)) || 0) + 15})
                 </span>
               </div>
               
-              <Link to={`/product/${product.id}`} className="block text-lg font-black text-slate-900 mb-2 line-clamp-1 hover:text-blue-600 transition-colors tracking-tighter">
+              <Link to={`/product/${product.id}`} className="block text-lg font-black text-slate-900 mb-4 line-clamp-1 hover:text-blue-600 transition-colors tracking-tighter">
                 {product.name}
               </Link>
               
-              <div className="flex items-center justify-between">
+              {/* Force bottom alignment for the price block */}
+              <div className="flex items-end justify-between mt-auto">
                 <div className="flex flex-col">
-                  {product.originalPrice && product.originalPrice > product.price && (
-                    <span className="text-[10px] font-bold text-slate-400 line-through">
-                      {formatPrice(product.originalPrice)}
-                    </span>
-                  )}
+                  {/* Invisible placeholder if no original price so it never jumps around */}
+                  <span className={`text-[10px] font-bold text-slate-400 line-through ${(!product.originalPrice || product.originalPrice <= product.price) ? 'opacity-0 select-none' : ''}`}>
+                    {formatPrice(product.originalPrice || product.price)}
+                  </span>
                   <span className="text-xl font-black text-blue-600">{formatPrice(product.price)}</span>
                 </div>
-                <Link to={`/product/${product.id}`} className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                <Link to={`/product/${product.id}`} className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-blue-600 transition-colors mb-1">
                   <ArrowRight size={18} />
                 </Link>
               </div>

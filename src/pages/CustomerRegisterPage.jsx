@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useUserAuth } from '../../contexts/UserAuthContext';
+import { useUserAuth } from '../contexts/UserAuthContext';
 import { Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
 
 const CustomerRegisterPage = () => {

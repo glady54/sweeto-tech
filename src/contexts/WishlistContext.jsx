@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useUserAuth } from './UserAuthContext';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const WishlistContext = createContext();
 
@@ -12,23 +15,73 @@ export const useWishlist = () => {
 
 export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
+  const { user } = useUserAuth();
 
-  // Load wishlist from localStorage on mount
+  // Load wishlist from localStorage or Firestore on mount/login
   useEffect(() => {
-    const savedWishlist = localStorage.getItem('wishlist');
-    if (savedWishlist) {
-      try {
-        setWishlistItems(JSON.parse(savedWishlist));
-      } catch (error) {
-        console.error('Error parsing wishlist from localStorage:', error);
+    const loadWishlist = async () => {
+      let localWishlist = [];
+      const savedWishlist = localStorage.getItem('wishlist');
+      if (savedWishlist) {
+        try {
+          localWishlist = JSON.parse(savedWishlist);
+        } catch (error) {
+          console.error('Error parsing wishlist from localStorage:', error);
+        }
       }
-    }
-  }, []);
 
-  // Save wishlist to localStorage when it changes
+      if (user && user.email !== 'sweeto@sweeto.com') {
+        try {
+          const docRef = doc(db, 'customerWishlists', user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const cloudWishlist = docSnap.data().items || [];
+            
+            // Basic Merge: If local exists, prioritize it and sync it up
+            if (localWishlist.length > 0) {
+              setWishlistItems(localWishlist);
+            } else {
+              setWishlistItems(cloudWishlist);
+            }
+          } else {
+            setWishlistItems(localWishlist);
+          }
+        } catch (error) {
+          console.error("Error fetching cloud wishlist", error);
+          setWishlistItems(localWishlist);
+        }
+      } else {
+        setWishlistItems(localWishlist);
+      }
+    };
+
+    loadWishlist();
+  }, [user]);
+
+  // Save wishlist to localStorage OR cloud when it changes
   useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
-  }, [wishlistItems]);
+    if (wishlistItems.length > 0 || localStorage.getItem('wishlist')) {
+      localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
+    }
+    
+    // Sync to cloud if logged in
+    if (user && user.email !== 'sweeto@sweeto.com') {
+      const syncToCloud = async () => {
+        try {
+          await setDoc(doc(db, 'customerWishlists', user.uid), { items: wishlistItems });
+        } catch (error) {
+          console.error("Error syncing wishlist to cloud:", error);
+        }
+      };
+      
+      const debounce = setTimeout(() => {
+        syncToCloud();
+      }, 500); 
+
+      return () => clearTimeout(debounce);
+    }
+  }, [wishlistItems, user]);
 
   const toggleWishlist = (product) => {
     setWishlistItems(prev => {

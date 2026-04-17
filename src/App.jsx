@@ -9,6 +9,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { LocaleProvider } from './contexts/LocaleContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { AdminLocaleProvider } from './contexts/AdminLocaleContext';
+import { UserAuthProvider } from './contexts/UserAuthContext'; // Customer Authentication
 
 // Analytics
 import analyticsService from './utils/analyticsService';
@@ -28,6 +29,8 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import SearchPage from './pages/SearchPage';
 import CartPage from './pages/CartPage';
 import WishlistPage from './pages/WishlistPage';
+import CustomerLoginPage from './pages/CustomerLoginPage';
+import CustomerRegisterPage from './pages/CustomerRegisterPage';
 
 // Admin Pages
 import LoginPage from './pages/admin/LoginPage';
@@ -57,11 +60,12 @@ function App() {
   return (
     <LocaleProvider>
       <ToastProvider>
-        <WishlistProvider>
-          <CartProvider>
-            <AdminLocaleProvider>
-              <AdminAuthProvider>
-                <AnalyticsTracker />
+        <UserAuthProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <AdminLocaleProvider>
+                <AdminAuthProvider>
+                  <AnalyticsTracker />
                 <Routes>
                   {/* Storefront Routes */}
                   <Route path="/" element={
@@ -130,6 +134,26 @@ function App() {
                       <Toast />
                     </div>
                   } />
+                  <Route path="/login" element={
+                    <div className="min-h-screen flex flex-col">
+                      <Header />
+                      <main className="flex-grow">
+                        <CustomerLoginPage />
+                      </main>
+                      <Footer />
+                      <Toast />
+                    </div>
+                  } />
+                  <Route path="/register" element={
+                    <div className="min-h-screen flex flex-col">
+                      <Header />
+                      <main className="flex-grow">
+                        <CustomerRegisterPage />
+                      </main>
+                      <Footer />
+                      <Toast />
+                    </div>
+                  } />
 
                   {/* Admin Routes */}
                   <Route path="/admin/login" element={<LoginPage />} />
@@ -161,7 +185,8 @@ function App() {
             </AdminLocaleProvider>
           </CartProvider>
         </WishlistProvider>
-      </ToastProvider>
+      </UserAuthProvider>
+    </ToastProvider>
     </LocaleProvider>
   );
 }

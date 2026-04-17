@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useUserAuth } from './UserAuthContext';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const CartContext = createContext();
 
@@ -12,23 +15,75 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = React.useState([]);
+  const { user } = useUserAuth();
 
-  // Load cart from localStorage on mount
-  React.useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error parsing cart from localStorage:', error);
+  // Load cart from localStorage or Firestore on mount/login
+  useEffect(() => {
+    const loadCart = async () => {
+      let localCart = [];
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          localCart = JSON.parse(savedCart);
+        } catch (error) {
+          console.error('Error parsing cart from localStorage:', error);
+        }
       }
-    }
-  }, []);
 
-  // Save cart to localStorage when it changes
-  React.useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+      if (user && user.email !== 'sweeto@sweeto.com') {
+        try {
+          const docRef = doc(db, 'customerCarts', user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const cloudCart = docSnap.data().items || [];
+            
+            // Basic Merge: If local cart exists, prioritize it and sync it up
+            if (localCart.length > 0) {
+              setCartItems(localCart);
+              // Will sync to cloud in the next useEffect
+            } else {
+              setCartItems(cloudCart);
+            }
+          } else {
+            // New user without a cloud cart yet, keep local
+            setCartItems(localCart);
+          }
+        } catch (error) {
+          console.error("Error fetching cloud cart", error);
+          setCartItems(localCart);
+        }
+      } else {
+        setCartItems(localCart);
+      }
+    };
+
+    loadCart();
+  }, [user]);
+
+  // Save cart to localStorage OR cloud when it changes
+  useEffect(() => {
+    if (cartItems.length > 0 || localStorage.getItem('cart')) {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    }
+    
+    // Sync to cloud if logged in
+    if (user && user.email !== 'sweeto@sweeto.com') {
+      const syncToCloud = async () => {
+        try {
+          await setDoc(doc(db, 'customerCarts', user.uid), { items: cartItems });
+        } catch (error) {
+          console.error("Error syncing cart to cloud:", error);
+        }
+      };
+      
+      const debounce = setTimeout(() => {
+        syncToCloud();
+      }, 500); // Debounce typing/rapid clicks
+
+      return () => clearTimeout(debounce);
+    }
+  }, [cartItems, user]);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);

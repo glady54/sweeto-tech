@@ -5,7 +5,8 @@ import { useWishlist } from '../contexts/WishlistContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { useStoreData } from '../contexts/StoreDataContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Search, ShoppingCart, Package, Sun, Moon, Heart, Menu, ChevronDown, Phone, Globe } from 'lucide-react';
+import { useUserAuth } from '../contexts/UserAuthContext';
+import { Search, ShoppingCart, Package, Sun, Moon, Heart, Menu, ChevronDown, Phone, Globe, User, LogOut } from 'lucide-react';
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +16,7 @@ const Header = () => {
   const { t } = useLocale();
   const { storeSettings, categories, formatPrice } = useStoreData();
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { user, isAuthenticated, logout } = useUserAuth();
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
@@ -108,6 +110,31 @@ const Header = () => {
                 </span>
               )}
             </Link>
+
+            {/* Customer Account */}
+            {isAuthenticated && user && user.email !== 'sweeto@sweeto.com' ? (
+              <div className="hidden sm:flex items-center ml-2 border-l border-gray-100 dark:border-slate-800 pl-4 group relative">
+                <button className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
+                  <User size={24} strokeWidth={1.5} />
+                  <span className="text-xs font-bold uppercase hidden lg:block">{user.displayName || 'Profile'}</span>
+                </button>
+                <div className="absolute top-10 right-0 w-48 bg-white dark:bg-slate-900 shadow-xl border border-gray-100 dark:border-slate-800 rounded-2xl p-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                  <p className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 break-words">{user.email}</p>
+                  <div className="h-px bg-gray-100 dark:bg-slate-800 my-1"></div>
+                  <button 
+                    onClick={logout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl flex items-center gap-2 transition-colors"
+                  >
+                    <LogOut size={16} /> Sign out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Link to="/login" className="hidden sm:flex items-center ml-2 mr-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors gap-2">
+                <User size={24} strokeWidth={1.5} />
+                <span className="text-xs font-bold uppercase hidden lg:block">Sign In</span>
+              </Link>
+            )}
 
             {/* Theme Toggle */}
             <button onClick={toggleDarkMode} className="p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">

@@ -5,7 +5,7 @@ import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -20,18 +20,20 @@ const LoginPage = () => {
     setError('');
     setIsLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const result = login(username, password);
+    try {
+      const result = await login(email, password);
 
       if (result.success) {
-        navigate('/admin/dashboard');
+        // Force reload or just navigate. Navigate works best in react-router v6.
+        navigate('/admin/dashboard', { replace: true });
       } else {
         setError(result.error);
       }
-
+    } catch (err) {
+      setError('An unexpected error occurred during login.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -51,19 +53,19 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1">
-                {t('username')}
+              <label htmlFor="email" className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1">
+                Admin Email
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 className="appearance-none relative block w-full px-4 py-3 border border-gray-200 dark:border-slate-800 placeholder-gray-400 dark:placeholder-gray-600 text-gray-900 dark:text-white rounded-2xl bg-gray-50 dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all"
-                placeholder="Enter admin username"
+                placeholder="admin@sweeto-tech.com"
               />
             </div>
 
@@ -127,11 +129,12 @@ const LoginPage = () => {
             </div>
           </form>
 
-          {/* Footer */}
+          {/* Secure Login Note */}
           <div className="mt-10 text-center">
-            <div className="inline-block p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-              <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tighter mb-1">Testing Credentials</p>
-              <code className="text-xs text-amber-600 dark:text-amber-500 font-mono">admin / admin123</code>
+            <div className="inline-block p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/10 border border-slate-100 dark:border-slate-900/20">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
+                Secured by Military-Grade Firebase Authentication
+              </p>
             </div>
           </div>
         </div>

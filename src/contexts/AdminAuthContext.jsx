@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
 
 const AdminAuthContext = createContext();
 
@@ -13,34 +15,56 @@ export const useAdminAuth = () => {
 export const AdminAuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Default admin credentials (in a real app, this would be handled by a backend)
-  const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'admin123'
-  };
+  useEffect(() => {
+    // Listen to Firebase authentication state
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAuthenticated(!!currentUser);
+      setLoading(false);
+    });
 
-  const login = (username, password) => {
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      setIsAuthenticated(true);
-      setUser({ username });
+    return () => unsubscribe();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       return { success: true };
-    } else {
-      return { success: false, error: 'Invalid username or password' };
+    } catch (error) {
+      console.error("Firebase Login Error:", error);
+      let errorMessage = 'Invalid email or password';
+      
+      // Map Firebase error codes to friendly messages
+      if (error.code === 'auth/user-not-found') errorMessage = 'User not found.';
+      else if (error.code === 'auth/wrong-password') errorMessage = 'Incorrect password.';
+      else if (error.code === 'auth/invalid-credential') errorMessage = 'Invalid email or password.';
+      else if (error.code === 'auth/too-many-requests') errorMessage = 'Too many attempts. Try again later.';
+      
+      return { success: false, error: errorMessage };
     }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
 
   const value = {
     isAuthenticated,
     user,
     login,
-    logout
+    logout,
+    loading
   };
+
+  if (loading) {
+    return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#020617', color: '#60a5fa' }}>Verifying Identity...</div>;
+  }
 
   return (
     <AdminAuthContext.Provider value={value}>

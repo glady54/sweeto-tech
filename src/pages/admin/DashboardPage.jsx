@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { useStoreData } from '../../contexts/StoreDataContext';
-import { Package, Grid3x3, Settings, Plus, Edit, Trash2, TrendingUp, Users, ShoppingCart, Warehouse, Receipt, AlertTriangle, MousePointer2 } from 'lucide-react';
+import { Package, Grid3x3, Settings, Plus, Edit, Trash2, TrendingUp, Users, ShoppingCart, Warehouse, Receipt, AlertTriangle, MousePointer2, Video, Globe } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user } = useAdminAuth();
   const { t } = useAdminLocale();
-  const { products, categories, storeSettings, formatPrice, salesRecords, visits } = useStoreData();
+  const { products, categories, storeSettings, formatPrice, salesRecords, visits, videoAds } = useStoreData();
 
   const lowStockProducts = products.filter(p => (p.lowStockThreshold || 0) > 0 && (p.stockQuantity || 0) <= (p.lowStockThreshold || 0));
 
@@ -19,7 +19,8 @@ const DashboardPage = () => {
     totalOrders: salesRecords.length,
     totalRevenue: salesRecords.reduce((sum, r) => sum + (r.totalPrice || 0), 0),
     lowStockCount: lowStockProducts.length,
-    totalVisits: visits.length
+    totalVisits: visits.length,
+    totalAds: videoAds ? videoAds.length : 0
   };
 
   const quickActions = [
@@ -64,6 +65,20 @@ const DashboardPage = () => {
       icon: MousePointer2,
       link: '/admin/analytics',
       color: 'bg-indigo-500'
+    },
+    {
+      title: 'Video Ads',
+      description: 'Manage marketing commercials',
+      icon: Video,
+      link: '/admin/video-ads',
+      color: 'bg-pink-500'
+    },
+    {
+      title: 'Storefront',
+      description: 'View the live public website',
+      icon: Globe,
+      link: '/',
+      color: 'bg-teal-500'
     }
   ];
 
@@ -71,7 +86,7 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-500">
       {/* Welcome Header */}
       <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
@@ -96,7 +111,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-slate-800 group">
@@ -143,6 +158,18 @@ const DashboardPage = () => {
               <div className="ml-5">
                 <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-1">Total Visits</p>
                 <p className="text-3xl font-black text-gray-900 dark:text-white font-mono">{stats.totalVisits}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-slate-800 group">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 bg-pink-50 dark:bg-pink-900/20 rounded-2xl p-4 group-hover:scale-110 transition-transform">
+                <Video className="h-7 w-7 text-pink-600 dark:text-pink-400" />
+              </div>
+              <div className="ml-5">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-1">Active Adverts</p>
+                <p className="text-3xl font-black text-gray-900 dark:text-white font-mono">{stats.totalAds}</p>
               </div>
             </div>
           </div>

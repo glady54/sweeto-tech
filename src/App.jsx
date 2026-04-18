@@ -42,6 +42,7 @@ import StockManagementPage from './pages/admin/StockManagementPage';
 import SalesHistoryPage from './pages/admin/SalesHistoryPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 import MigratePage from './pages/admin/MigratePage';
+import VideoAdsPage from './pages/admin/VideoAdsPage';
 
 const AnalyticsTracker = () => {
   const location = useLocation();
@@ -176,6 +177,7 @@ function App() {
                     <Route path="settings" element={<StoreSettingsPage />} />
                     <Route path="migrate" element={<MigratePage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
+                    <Route path="video-ads" element={<VideoAdsPage />} />
                   </Route>
 
                   {/* Universal Fallback */}

@@ -37,6 +37,7 @@ export const StoreDataProvider = ({ children }) => {
   const [stockAdjustments, setStockAdjustments] = useState([]);
   const [salesRecords, setSalesRecords] = useState([]);
   const [visits, setVisits] = useState([]);
+  const [videoAds, setVideoAds] = useState([]);
   const [storeSettings, setStoreSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
@@ -76,6 +77,13 @@ export const StoreDataProvider = ({ children }) => {
     unsubs.push(
       onSnapshot(collection(db, 'visits'), snap => {
         setVisits(snap.docs.map(d => ({ ...d.data(), id: d.id })));
+      })
+    );
+
+    // videoAds
+    unsubs.push(
+      onSnapshot(collection(db, 'videoAds'), snap => {
+        setVideoAds(snap.docs.map(d => ({ ...d.data(), id: d.id })));
       })
     );
 
@@ -165,6 +173,19 @@ export const StoreDataProvider = ({ children }) => {
     return { success: true };
   };
 
+  // ─── VIDEO ADS ACTIONS ───────────────────────────────────────────────────────
+  const addVideoAd = async (videoAdPayload) => {
+    const now = new Date().toISOString();
+    const payload = { ...videoAdPayload, createdAt: now };
+    const docRef = await addDoc(collection(db, 'videoAds'), payload);
+    return { ...payload, id: docRef.id };
+  };
+
+  const deleteVideoAd = async (id) => {
+    await deleteDoc(doc(db, 'videoAds', id));
+    return { success: true };
+  };
+
   // ─── SETTINGS ACTIONS ────────────────────────────────────────────────────────
   const updateStoreSettings = async (updates) => {
     try {
@@ -205,11 +226,12 @@ export const StoreDataProvider = ({ children }) => {
   };
 
   const value = {
-    products, categories, storeSettings, stockAdjustments, salesRecords, visits,
+    products, categories, storeSettings, stockAdjustments, salesRecords, visits, videoAds,
     loading,
     addProduct, updateProduct, deleteProduct,
     adjustStock, addSaleRecord,
     addCategory, updateCategory, deleteCategory,
+    addVideoAd, deleteVideoAd,
     updateStoreSettings,
     formatPrice, currencySymbol
   };

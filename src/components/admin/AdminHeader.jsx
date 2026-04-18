@@ -4,7 +4,7 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { LogOut, Globe, Settings, Package, Grid3x3, Home, Sun, Moon, Warehouse, Receipt, MousePointer2 } from 'lucide-react';
+import { LogOut, Globe, Settings, Package, Grid3x3, Home, Sun, Moon, Warehouse, Receipt, MousePointer2, Video } from 'lucide-react';
 
 const AdminHeader = () => {
   const { user, logout } = useAdminAuth();
@@ -20,7 +20,7 @@ const AdminHeader = () => {
 
   return (
     <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg shadow-blue-500/5 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-50 transition-all duration-500">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
+      <div className="w-full max-w-[1920px] mx-auto px-6 sm:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo and Shop Name */}
           <div className="flex items-center group cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
@@ -55,6 +55,7 @@ const AdminHeader = () => {
               { to: '/admin/stock', icon: Warehouse, label: t('stockManagement') },
               { to: '/admin/sales', icon: Receipt, label: t('salesHistory') },
               { to: '/admin/analytics', icon: MousePointer2, label: 'Analytics' },
+              { to: '/admin/video-ads', icon: Video, label: 'Video Ads' },
               { to: '/admin/settings', icon: Settings, label: t('storeSettings') },
             ].map((item) => (
               <Link
@@ -113,8 +114,8 @@ const AdminHeader = () => {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50 overflow-x-auto">
-        <div className="px-4 py-3 flex space-x-2">
+      <div className="lg:hidden border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50 overflow-x-auto hide-scrollbar touch-pan-x">
+        <div className="px-4 py-3 flex space-x-2 w-max">
           {[
             { to: '/admin/dashboard', icon: Home, label: t('dashboard') },
             { to: '/admin/products', icon: Package, label: t('productManagement') },
@@ -122,6 +123,7 @@ const AdminHeader = () => {
             { to: '/admin/stock', icon: Warehouse, label: t('stockManagement') },
             { to: '/admin/sales', icon: Receipt, label: t('salesHistory') },
             { to: '/admin/analytics', icon: MousePointer2, label: 'Analytics' },
+            { to: '/admin/video-ads', icon: Video, label: 'Video Ads' },
             { to: '/admin/settings', icon: Settings, label: t('storeSettings') },
           ].map((item) => (
             <Link

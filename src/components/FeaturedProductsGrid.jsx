@@ -8,7 +8,7 @@ import { Heart, ShoppingCart, ChevronLeft, ChevronRight, Zap } from 'lucide-reac
 import WhatsAppButton from './WhatsAppButton';
 
 const FeaturedProductsGrid = () => {
-  const { products, categories, formatPrice } = useStoreData();
+  const { products, categories, formatPrice, videoAds } = useStoreData();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
@@ -37,13 +37,16 @@ const FeaturedProductsGrid = () => {
   const totalPages = Math.ceil(filtered.length / perPage);
   const visible = filtered.slice(page * perPage, page * perPage + perPage);
 
-  // Pick the most expensive active product as the featured promo
+  // Pick the most expensive active product as the featured promo fallback
   const promoProduct = [...activeProducts].sort((a, b) => (b.price || 0) - (a.price || 0))[0];
+
+  // Pick the most recently added video advert
+  const activeVideoAd = videoAds && videoAds.length > 0 ? videoAds[videoAds.length - 1] : null;
 
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="max-w-[1400px] mx-auto px-4">
+    <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Featured Products</h2>
@@ -71,11 +74,10 @@ const FeaturedProductsGrid = () => {
           <button
             key={tab.id}
             onClick={() => { setActiveTab(tab.id); setPage(0); }}
-            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
-              activeTab === tab.id
+            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === tab.id
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                 : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -83,61 +85,38 @@ const FeaturedProductsGrid = () => {
       </div>
 
       {/* Layout: Products Grid + Promo Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-        {/* Products */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="w-full flex flex-col gap-6 sm:gap-8">
+        {/* Products - Fixed 2-column grid with strict width control mb-6 */}
+        <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] md:grid-cols-4 gap-2 sm:gap-4 w-full">
           {visible.map(product => (
-            <div key={product.id} className="group bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
+            <div key={product.id} className="group bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col min-w-0 w-full relative">
               {/* Image */}
-              <div className="relative bg-gray-50 dark:bg-slate-950 p-4 aspect-square overflow-hidden">
-                <Link to={`/product/${product.id}`}>
+              <div className="relative bg-gray-50 dark:bg-slate-950 p-1 sm:p-4 aspect-square overflow-hidden flex items-center justify-center">
+                <Link to={`/product/${product.id}`} className="w-full h-full flex items-center justify-center p-1">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                    className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500"
                   />
                 </Link>
                 {/* Badges */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                <div className="absolute top-1 left-1 flex flex-col gap-1">
                   {product.originalPrice && product.originalPrice > product.price && (
-                    <span className="bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
-                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                    <span className="bg-red-500 text-white text-[7px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                     </span>
                   )}
-                  {product.badge && (
-                    <span className="bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
-                      {product.badge}
-                    </span>
-                  )}
-                </div>
-                {/* Quick actions */}
-                <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200">
-                  <button
-                    onClick={() => { toggleWishlist(product); if (!isInWishlist(product.id)) showToast(`Added to wishlist`); }}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center shadow transition-all ${isInWishlist(product.id) ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-red-500 hover:text-white'}`}
-                  >
-                    <Heart size={13} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
-                  </button>
-                  <button
-                    onClick={() => { addToCart(product); showToast(`Added to cart`); }}
-                    className="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow text-gray-700 hover:bg-blue-600 hover:text-white transition-all"
-                  >
-                    <ShoppingCart size={13} />
-                  </button>
                 </div>
               </div>
 
               {/* Info */}
-              <div className="p-3 flex flex-col flex-1">
-                <Link to={`/product/${product.id}`} className="text-xs font-black text-gray-900 dark:text-white line-clamp-2 hover:text-blue-600 transition-colors leading-snug mb-2">
+              <div className="p-2 sm:p-3 flex flex-col flex-1 min-w-0">
+                <Link to={`/product/${product.id}`} className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white line-clamp-1 hover:text-blue-600 transition-colors leading-tight mb-1 sm:mb-2 break-words">
                   {product.name}
                 </Link>
-                <div className="mt-auto flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-black text-blue-600">{formatPrice(product.price)}</p>
-                    {product.originalPrice && product.originalPrice > product.price && (
-                      <p className="text-[10px] text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
-                    )}
+                <div className="mt-auto flex items-center justify-between gap-1">
+                  <div className="flex flex-col min-w-0">
+                    <p className="text-[10px] sm:text-sm font-black text-blue-600 tracking-tighter truncate">{formatPrice(product.price)}</p>
                   </div>
                   <WhatsAppButton product={product} iconOnly={true} />
                 </div>
@@ -151,27 +130,61 @@ const FeaturedProductsGrid = () => {
         </div>
 
         {/* Promo card */}
-        {promoProduct && (
-          <div className="hidden lg:flex bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 flex-col justify-between overflow-hidden relative min-h-[280px]">
-            <div className="absolute -right-8 -bottom-8 w-44 h-44 bg-white/10 rounded-full" />
-            <div className="absolute -right-4 bottom-16 w-24 h-24 bg-white/10 rounded-full" />
-            <div>
-              <span className="text-blue-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><Zap size={10}/> Featured Pick</span>
-              <h3 className="text-white text-xl font-black mt-2 leading-tight">{promoProduct.name}</h3>
-              <p className="text-blue-200 text-sm mt-1">WITH BEST SAVINGS & PREMIUM QUALITY</p>
-              <p className="text-white text-3xl font-black mt-4">{formatPrice(promoProduct.price)}</p>
-            </div>
-            <img
-              src={promoProduct.image}
-              alt={promoProduct.name}
-              className="w-full h-36 object-contain drop-shadow-2xl mt-4"
+        {activeVideoAd ? (
+          <div className="flex bg-black rounded-xl sm:rounded-2xl p-0 flex-col justify-between overflow-hidden relative min-h-[320px] md:min-h-[400px] w-full group shadow-2xl">
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              src={activeVideoAd.videoUrl}
+              className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
             />
-            <Link
-              to={`/product/${promoProduct.id}`}
-              className="mt-4 inline-block bg-white text-blue-600 rounded-xl py-2.5 text-center text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all"
-            >
-              Shop Now →
-            </Link>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 pointer-events-none" />
+            
+            <div className="relative z-10 p-4 sm:p-6 flex flex-col h-full justify-between pointer-events-none">
+              <div className="mt-2">
+                <span className="bg-pink-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg inline-flex items-center backdrop-blur-md border border-pink-500/50"><Zap size={12} className="mr-1.5" /> Featured</span>
+              </div>
+              <div className="mt-auto pointer-events-auto">
+                <h3 className="text-white text-2xl sm:text-3xl font-black leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{activeVideoAd.title}</h3>
+                {activeVideoAd.productId && products.find(p => p.id === activeVideoAd.productId) ? (
+                  <Link
+                    to={`/product/${activeVideoAd.productId}`}
+                    className="mt-5 inline-block bg-white text-pink-600 rounded-xl px-6 py-3 text-center text-xs font-black uppercase tracking-widest hover:bg-pink-50 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all"
+                  >
+                    Shop Now →
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : promoProduct && (
+          <div className="flex bg-gradient-to-br from-blue-600 to-indigo-900 rounded-xl sm:rounded-2xl p-6 sm:p-10 flex-col md:flex-row justify-between items-center overflow-hidden relative min-h-[320px] w-full group">
+            <div className="absolute -right-8 -bottom-8 w-64 h-64 bg-blue-500/20 rounded-full blur-2xl" />
+            <div className="absolute left-1/2 bottom-16 w-32 h-32 bg-purple-500/20 rounded-full blur-xl" />
+            
+            <div className="relative z-10 md:w-1/2 flex flex-col justify-center items-start text-left w-full">
+              <span className="text-blue-200 text-xs font-black uppercase tracking-widest flex items-center gap-1.5"><Zap size={14} /> Featured Pick</span>
+              <h3 className="text-white text-3xl md:text-5xl font-black mt-3 leading-tight">{promoProduct.name}</h3>
+              <p className="text-blue-200 text-sm md:text-base font-bold mt-2 tracking-wide uppercase">WITH BEST SAVINGS & PREMIUM QUALITY</p>
+              <p className="text-white text-4xl md:text-5xl font-black mt-6 tracking-tighter">{formatPrice(promoProduct.price)}</p>
+              
+              <Link
+                to={`/product/${promoProduct.id}`}
+                className="relative z-10 mt-8 inline-block bg-white text-blue-900 rounded-2xl px-10 py-4 text-center text-sm font-black uppercase tracking-widest hover:bg-blue-50 hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
+              >
+                Shop Now →
+              </Link>
+            </div>
+            
+            <div className="w-full md:w-1/2 mt-8 md:mt-0 flex justify-center items-center relative z-10">
+              <img
+                src={promoProduct.image}
+                alt={promoProduct.name}
+                className="w-full max-w-[280px] md:max-w-[400px] h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)] group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-700"
+              />
+            </div>
           </div>
         )}
       </div>

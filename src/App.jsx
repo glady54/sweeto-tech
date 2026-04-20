@@ -18,6 +18,7 @@ import analyticsService from './utils/analyticsService';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import QRShareButton from './components/QRShareButton';
+import FloatingCartButton from './components/FloatingCartButton';
 import Toast from './components/Toast';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminLayout from './components/admin/AdminLayout';
@@ -77,6 +78,7 @@ function App() {
                       </main>
                       <Footer />
                       <QRShareButton />
+                      <FloatingCartButton />
                       <Toast />
                     </div>
                   } />
@@ -88,6 +90,7 @@ function App() {
                       </main>
                       <Footer />
                       <QRShareButton />
+                      <FloatingCartButton />
                       <Toast />
                     </div>
                   } />
@@ -99,6 +102,7 @@ function App() {
                       </main>
                       <Footer />
                       <QRShareButton />
+                      <FloatingCartButton />
                       <Toast />
                     </div>
                   } />
@@ -110,6 +114,7 @@ function App() {
                       </main>
                       <Footer />
                       <QRShareButton />
+                      <FloatingCartButton />
                       <Toast />
                     </div>
                   } />
@@ -121,6 +126,7 @@ function App() {
                       </main>
                       <Footer />
                       <QRShareButton />
+                      <FloatingCartButton />
                       <Toast />
                     </div>
                   } />
@@ -132,6 +138,7 @@ function App() {
                       </main>
                       <Footer />
                       <QRShareButton />
+                      <FloatingCartButton />
                       <Toast />
                     </div>
                   } />

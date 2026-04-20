@@ -15,8 +15,8 @@ export const getWhatsAppLink = (phone, productName, productPrice, shopName = 'SW
   // Build the message following the exact requested format
   let message = '';
   
-  // Putting the image at the top helps WhatsApp generate a rich link preview
-  if (imageUrl) {
+  // Only include the image if it is a URL (not a Base64 string)
+  if (imageUrl && imageUrl.startsWith('http')) {
     message += `${imageUrl}\n\n`;
   }
 

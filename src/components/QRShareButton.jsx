@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { QrCode, X, Wifi } from 'lucide-react';
+import { QrCode, X, Globe, Sparkles } from 'lucide-react';
 
 const QRShareButton = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Build the local network URL dynamically
-  const networkUrl = `http://${window.location.hostname}:${window.location.port}`;
+  // Use the live store URL dynamically
+  const storeUrl = window.location.origin;
 
   return (
     <>
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-[0_0_25px_rgba(37,99,235,0.5)] hover:shadow-[0_0_35px_rgba(37,99,235,0.7)] hover:scale-110 transition-all duration-300"
-        aria-label="Share via QR Code"
+        className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_25px_rgba(37,99,235,0.5)] hover:shadow-[0_0_35px_rgba(37,99,235,0.7)] hover:scale-110 active:scale-95 transition-all duration-300"
+        aria-label="Share Store"
         title="Share this store"
       >
         <QrCode size={24} />
@@ -23,41 +23,45 @@ const QRShareButton = () => {
       {/* Modal Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           onClick={() => setIsOpen(false)}
         >
           <div 
-            className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 p-8 max-w-sm w-full mx-4 text-center"
+            className="relative bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-white/20 p-8 max-w-sm w-full text-center overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Background Decorative Gradient */}
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
+
             {/* Close Button */}
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400 transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400 transition-colors z-10"
               aria-label="Close"
             >
               <X size={20} />
             </button>
 
-            {/* WiFi Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/40">
-                <Wifi size={28} className="text-blue-600 dark:text-blue-400" />
+            {/* Icon */}
+            <div className="flex justify-center mb-6 relative z-10">
+              <div className="p-4 rounded-[2rem] bg-indigo-50 dark:bg-indigo-900/40 relative">
+                <Globe size={32} className="text-indigo-600 dark:text-indigo-400 animate-spin-slow" />
+                <Sparkles className="absolute -top-1 -right-1 text-yellow-400" size={16} />
               </div>
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-              Scan to Visit Store
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2 italic uppercase tracking-tight relative z-10">
+              Share Store
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              Make sure you're on the same WiFi network
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-8 px-4 relative z-10">
+              Let others discover our premium electronics collection
             </p>
 
             {/* QR Code */}
-            <div className="flex justify-center mb-6">
-              <div className="p-4 bg-white rounded-2xl shadow-inner">
+            <div className="flex justify-center mb-8 relative z-10">
+              <div className="p-5 bg-white rounded-3xl shadow-xl shadow-indigo-500/10 border border-indigo-50">
                 <QRCodeSVG
-                  value={networkUrl}
+                  value={storeUrl}
                   size={200}
                   bgColor="#ffffff"
                   fgColor="#1e293b"
@@ -68,10 +72,10 @@ const QRShareButton = () => {
             </div>
 
             {/* URL Display */}
-            <div className="bg-gray-100 dark:bg-slate-800 rounded-xl px-4 py-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Network URL</p>
-              <p className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400 break-all">
-                {networkUrl}
+            <div className="bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-2xl px-5 py-4 relative z-10">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">Store Link</p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400 break-all select-all">
+                {storeUrl}
               </p>
             </div>
           </div>

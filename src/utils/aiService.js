@@ -7,9 +7,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
  * @param {string} apiKey - The Google Gemini API Key.
  * @param {string} language - The language to generate the description in (e.g., 'en', 'fr').
  * @param {object} metadata - Optional context like product name or category.
+ * @param {string} modelName - The Gemini model to use (default: 'gemini-1.5-flash').
  * @returns {Promise<string>} - The generated description.
  */
-export const generateAIProductDescription = async (base64Image, apiKey, language = 'en', metadata = {}) => {
+export const generateAIProductDescription = async (base64Image, apiKey, language = 'en', metadata = {}, modelName = 'gemini-1.5-flash') => {
   if (!apiKey) {
     throw new Error('MISSING_API_KEY');
   }
@@ -20,8 +21,8 @@ export const generateAIProductDescription = async (base64Image, apiKey, language
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Let the SDK manage the versioning based on the model name
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Use the model name provided or fallback
+    const model = genAI.getGenerativeModel({ model: modelName || "gemini-1.5-flash" });
 
     // Clean up the base64 string and extract mimeType
     const mimeMatch = base64Image.match(/^data:([^;]+);base64,/);
@@ -109,5 +110,36 @@ export const generateAIProductDescription = async (base64Image, apiKey, language
 
     // Pass through the actual error message to help the user debug
     throw new Error(`AI_GEN_ERROR: ${error.message || 'Unknown failure'}`);
+  }
+};
+
+/**
+ * Tests the Gemini API connection by attempting to list models.
+ * @param {string} apiKey - The API key to test.
+ * @returns {Promise<{success: boolean, message: string, models?: any[]}>}
+ */
+export const testGeminiConnection = async (apiKey) => {
+  if (!apiKey) return { success: false, message: 'MISSING_KEY' };
+  
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const data = await response.json();
+    
+    if (response.ok) {
+      if (data.models && data.models.length > 0) {
+        return { 
+          success: true, 
+          message: 'READY', 
+          models: data.models.map(m => m.name.replace('models/', '')) 
+        };
+      }
+      return { success: false, message: 'NO_MODELS_FOUND' };
+    } else {
+      if (response.status === 400) return { success: false, message: 'INVALID_KEY' };
+      if (response.status === 403) return { success: false, message: 'API_NOT_ENABLED' };
+      return { success: false, message: data.error?.message || 'UNKNOWN_ERROR' };
+    }
+  } catch (err) {
+    return { success: false, message: 'NETWORK_ERROR' };
   }
 };

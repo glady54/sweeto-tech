@@ -40,8 +40,10 @@ const FeaturedProductsGrid = () => {
   // Pick the most expensive active product as the featured promo fallback
   const promoProduct = [...activeProducts].sort((a, b) => (b.price || 0) - (a.price || 0))[0];
 
-  // Pick the most recently added video advert
-  const activeVideoAd = videoAds && videoAds.length > 0 ? videoAds[videoAds.length - 1] : null;
+  // Pick the most recently added active video advert
+  const activeVideoAd = videoAds && videoAds.length > 0 
+    ? [...videoAds].filter(ad => ad.isActive).reverse()[0] 
+    : null;
 
   if (!products || products.length === 0) return null;
 

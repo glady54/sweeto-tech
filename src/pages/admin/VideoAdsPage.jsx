@@ -14,7 +14,8 @@ const VideoAdsPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     productId: '',
-    videoUrl: ''
+    videoUrl: '',
+    isActive: true
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -32,10 +33,10 @@ const VideoAdsPage = () => {
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setError('');
 
-    // 1. Basic Format/Size Validation
-    if (!file.type.startsWith('video/')) {
-      setError('Please upload a valid video file (mp4, webm).');
+    if (!['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type) && !file.name.match(/\.(mp4|webm|mov)$/i)) {
+      setError('Please upload a valid video file (MP4 or WebM).');
       return;
     }
     if (file.size > 100 * 1024 * 1024) { 
@@ -43,35 +44,56 @@ const VideoAdsPage = () => {
       return;
     }
 
-    // 2. Duration Extraction & Validation
-    const videoUrl = URL.createObjectURL(file);
+    // Duration Extraction & Validation
+    const objectUrl = URL.createObjectURL(file);
     const videoElement = document.createElement('video');
     videoElement.preload = 'metadata';
-    videoElement.src = videoUrl;
+
+    let metadataHandled = false;
+
+    // Timeout fallback: if metadata never loads in 10s, just upload without duration check
+    const metadataTimeout = setTimeout(() => {
+      if (!metadataHandled) {
+        metadataHandled = true;
+        URL.revokeObjectURL(objectUrl);
+        console.warn('Video metadata timeout — skipping duration check and uploading directly.');
+        startUpload(file);
+      }
+    }, 10000);
 
     videoElement.onloadedmetadata = () => {
+      if (metadataHandled) return;
+      metadataHandled = true;
+      clearTimeout(metadataTimeout);
+
       const duration = videoElement.duration;
+      // Revoke AFTER reading metadata
+      URL.revokeObjectURL(objectUrl);
       setDetectedDuration(duration);
-      URL.revokeObjectURL(videoUrl);
 
       // Check Duration Limits (1s to 50s)
       if (duration < 1) {
         setError('Video is too short. Adverts must be at least 1 second.');
         return;
       }
-      if (duration > 50.5) { // Allow slight margin for rounding
+      if (duration > 50.5) {
         setError(`Video is too long (${Math.round(duration)}s). Adverts must be 50 seconds or less.`);
         return;
       }
 
-      // 3. Start Upload if valid
       startUpload(file);
     };
 
     videoElement.onerror = () => {
+      if (metadataHandled) return;
+      metadataHandled = true;
+      clearTimeout(metadataTimeout);
+      URL.revokeObjectURL(objectUrl);
       setError('Could not read video metadata. The format might be unsupported or corrupted.');
-      URL.revokeObjectURL(videoUrl);
     };
+
+    // Set src AFTER attaching handlers
+    videoElement.src = objectUrl;
   };
 
   const startUpload = (file) => {
@@ -84,25 +106,47 @@ const VideoAdsPage = () => {
       const uploadTask = uploadBytesResumable(storageRef, file);
       setActiveUpload(uploadTask);
 
+      // ─── Watchdog: if no bytes transfer in 30s, cancel & diagnose ───────────
+      let lastBytesTransferred = -1;
+      const watchdog = setTimeout(() => {
+        if (uploadTask.snapshot.bytesTransferred === 0) {
+          uploadTask.cancel();
+          setIsUploading(false);
+          setActiveUpload(null);
+          setError(
+            'Upload timed out with 0 bytes sent. Please check: ' +
+            '(1) Firebase Storage is enabled in the Firebase Console, ' +
+            '(2) Storage security rules allow writes, ' +
+            '(3) Your internet connection is working.'
+          );
+        }
+      }, 30000);
+
       uploadTask.on('state_changed', 
         (snapshot) => {
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           setUploadProgress(Math.round(progress));
+          // If bytes are moving, watchdog is no longer needed
+          if (snapshot.bytesTransferred > 0) clearTimeout(watchdog);
         }, 
         (err) => {
+          clearTimeout(watchdog);
           console.error('Video upload error:', err);
           setActiveUpload(null);
           setIsUploading(false);
           
           if (err.code === 'storage/unauthorized') {
-            setError('Permission Denied: Firebase storage rules are blocking this upload.');
+            setError('Permission Denied: Go to Firebase Console → Storage → Rules and allow writes for admin users.');
           } else if (err.code === 'storage/canceled') {
             setError('Upload was canceled.');
+          } else if (err.code === 'storage/unknown') {
+            setError('Unknown Storage error. Make sure Firebase Storage is enabled in your Firebase Console (Build → Storage).');
           } else {
             setError(`Upload failed: ${err.message}`);
           }
         }, 
         async () => {
+          clearTimeout(watchdog);
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             setFormData(prev => ({ ...prev, videoUrl: downloadURL }));
@@ -142,15 +186,29 @@ const VideoAdsPage = () => {
     }
 
     try {
-      await addVideoAd(formData);
+      await addVideoAd({ ...formData, isActive: true });
       setSuccess('Video Advert published successfully!');
       setTimeout(() => {
         setShowForm(false);
-        setFormData({ title: '', productId: '', videoUrl: '' });
+        setFormData({ title: '', productId: '', videoUrl: '', isActive: true });
         setSuccess('');
       }, 2000);
     } catch (err) {
       setError('Failed to publish advert. Please try again.');
+    }
+  };
+
+  const toggleStatus = async (ad) => {
+    try {
+      await updateVideoAd(ad.id, { isActive: !ad.isActive });
+    } catch (err) {
+      console.error("Failed to toggle status", err);
+    }
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to remove this video advert? This action cannot be undone.')) {
+      deleteVideoAd(id);
     }
   };
 
@@ -327,9 +385,17 @@ const VideoAdsPage = () => {
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">No product linked</p>
                     )}
                   </div>
-                  <div className="mt-6 border-t border-gray-50 dark:border-slate-800 pt-4 flex justify-end">
+                  <div className="mt-6 border-t border-gray-50 dark:border-slate-800 pt-4 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                       <button
+                         onClick={() => toggleStatus(ad)}
+                         className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${ad.isActive ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-500'}`}
+                       >
+                         {ad.isActive ? 'Active' : 'Inactive'}
+                       </button>
+                    </div>
                     <button
-                      onClick={() => deleteVideoAd(ad.id)}
+                      onClick={() => handleDelete(ad.id)}
                       className="px-4 py-2.5 text-[10px] font-black bg-red-50 text-red-600 hover:bg-red-600 hover:text-white dark:bg-red-900/10 dark:text-red-400 rounded-xl transition-all flex items-center uppercase tracking-widest"
                     >
                       <Trash2 size={14} className="mr-1.5" /> Remove

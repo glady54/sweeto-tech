@@ -140,7 +140,8 @@ const ProductManagerPage = () => {
         formData.image,
         storeSettings.geminiApiKey,
         storeSettings.adminLanguage || 'en',
-        { name: formData.name }
+        { name: formData.name },
+        storeSettings.geminiModel || 'gemini-1.5-flash'
       );
       setAiSuggestion(description);
     } catch (err) {

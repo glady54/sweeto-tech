@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   contactEmail: 'admin@sweeto-tech.com',
   storeTagline: 'Your trusted electronics destination',
   geminiApiKey: '',
+  geminiModel: 'gemini-1.5-flash',
   whatsappNumber: '',
   shopPhone: '+1-800-SWEETO',
   shopAddress: '123 Tech Street, Silicon Valley, CA',
@@ -185,6 +186,10 @@ export const StoreDataProvider = ({ children }) => {
     return { ...payload, id: docRef.id };
   };
 
+  const updateVideoAd = async (id, updates) => {
+    await updateDoc(doc(db, 'videoAds', id), updates);
+  };
+
   const deleteVideoAd = async (id) => {
     await deleteDoc(doc(db, 'videoAds', id));
     return { success: true };
@@ -235,7 +240,7 @@ export const StoreDataProvider = ({ children }) => {
     addProduct, updateProduct, deleteProduct,
     adjustStock, addSaleRecord, deleteSaleRecord,
     addCategory, updateCategory, deleteCategory,
-    addVideoAd, deleteVideoAd,
+    addVideoAd, updateVideoAd, deleteVideoAd,
     updateStoreSettings,
     formatPrice, currencySymbol
   };

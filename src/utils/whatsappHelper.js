@@ -9,27 +9,22 @@
 export const getWhatsAppLink = (phone, productName, productPrice, shopName = 'SWEETO-HUB', imageUrl = '') => {
   if (!phone) return null;
   
-  // Clean phone number (remove +, spaces, -, etc.)
   const cleanPhone = phone.replace(/\D/g, '');
-  
-  // Build the message following the exact requested format
   let message = '';
   
-  // Start with the image URL to trigger WhatsApp link preview
   if (imageUrl && imageUrl.startsWith('http')) {
     message += `${imageUrl}\n\n`;
   }
   
-  message += `*📦 NEW ORDER - ${shopName.toUpperCase()}*\n`;
+  message += `🛒 *ORDER REQUEST - ${shopName.toUpperCase()}*\n`;
   message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `*Items:*\n`;
-  message += `• ${productName} (x1) - ${productPrice}\n`;
+  message += `Hello! I would like to order:\n\n`;
+  message += `🏷️ *${productName}*\n`;
+  message += `💰 *Price:* ${productPrice}\n`;
   message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `*Total Amount: ${productPrice}*\n\n`;
-  message += `_Generated via Sweeto-Tech Storefront_`;
+  message += `✨ _Sent via Sweeto-Tech premium storefront_`;
 
   const encodedMessage = encodeURIComponent(message);
-  
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 };
 
@@ -51,13 +46,13 @@ export const getInquiryWhatsAppLink = (phone, productName, shopName = 'SWEETO-HU
     message += `${imageUrl}\n\n`;
   }
   
-  message += `*🙋‍♂️ AVAILABILITY INQUIRY - ${shopName.toUpperCase()}*\n`;
+  message += `🙋‍♂️ *AVAILABILITY INQUIRY - ${shopName.toUpperCase()}*\n`;
   message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `Hello! I'm interested in the following product:\n\n`;
-  message += `*Product:* ${productName}\n\n`;
-  message += `Is this item currently available in stock?\n`;
+  message += `Hello! I'm interested in this item:\n\n`;
+  message += `📦 *Product:* ${productName}\n\n`;
+  message += `Is this currently available in stock?\n`;
   message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `_Sent from Sweeto-Tech Storefront_`;
+  message += `✨ _Sent via Sweeto-Tech premium storefront_`;
 
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
@@ -78,22 +73,24 @@ export const getCartWhatsAppLink = (phone, items, total, shopName = 'SWEETO-HUB'
   const cleanPhone = phone.replace(/\D/g, '');
   let message = '';
 
-  // Add the first item's image at the top to trigger WhatsApp preview
   if (items[0].image && items[0].image.startsWith('http')) {
     message += `${items[0].image}\n\n`;
   }
 
-  message += `*📦 NEW ORDER - ${shopName.toUpperCase()}*\n`;
+  message += `🛒 *NEW CART ORDER - ${shopName.toUpperCase()}*\n`;
   message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `*Items:*\n`;
+  message += `Hello! I would like to order the following items:\n\n`;
 
   items.forEach(item => {
-    message += `• ${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
+    message += `🏷️ *${item.name}*\n`;
+    message += `   Quantity: ${item.quantity} × ${formatPrice(item.price)}\n`;
+    message += `   Subtotal: ${formatPrice(item.price * item.quantity)}\n\n`;
   });
 
   message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `*Total Amount: ${formatPrice(total)}*\n\n`;
-  message += `_Generated via Sweeto-Tech Storefront_`;
+  message += `💰 *TOTAL AMOUNT: ${formatPrice(total)}*\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `✨ _Sent via Sweeto-Tech premium storefront_`;
 
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;

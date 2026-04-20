@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
-import { Settings, Save, Globe, Banknote, Mail, Info, Image as ImageIcon, Plus, Sparkles, ExternalLink, Loader2, MessageSquare, Phone, MapPin, Share2, Camera, MessageCircle } from 'lucide-react';
+import { Settings, Save, Globe, Banknote, Mail, Info, Image as ImageIcon, Plus, Sparkles, ExternalLink, Loader2, MessageSquare, Phone, MapPin, Share2, Camera, MessageCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
 import { uploadToStorage } from '../../utils/firebaseStorage';
+import { testGeminiConnection } from '../../utils/aiService';
 
 const StoreSettingsPage = () => {
   const { storeSettings, updateStoreSettings } = useStoreData();
@@ -14,6 +15,8 @@ const StoreSettingsPage = () => {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isTestingAi, setIsTestingAi] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   // Sync internal form state if store settings load after initial mount
   React.useEffect(() => {
@@ -63,6 +66,20 @@ const StoreSettingsPage = () => {
       setError('Failed to save settings. Please check your connection and try again.');
       setTimeout(() => setError(''), 5000);
     }
+  };
+
+  const handleVerifyAiKey = async () => {
+    if (!formData.geminiApiKey) {
+      setTestResult({ success: false, message: 'Please enter a key first' });
+      return;
+    }
+    
+    setIsTestingAi(true);
+    setTestResult(null);
+    
+    const result = await testGeminiConnection(formData.geminiApiKey);
+    setTestResult(result);
+    setIsTestingAi(false);
   };
 
   return (
@@ -321,38 +338,82 @@ const StoreSettingsPage = () => {
             <Sparkles className="text-indigo-600 dark:text-indigo-400 mr-3" size={20} />
             <h2 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-xs italic">AI Configuration</h2>
           </div>
-          <div className="p-8 space-y-6 relative z-10">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="flex-grow w-full">
-                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1" htmlFor="geminiApiKey">Gemini API Key</label>
-                <div className="relative">
-                  <input
-                    id="geminiApiKey"
-                    type="password"
-                    name="geminiApiKey"
-                    value={formData.geminiApiKey || ''}
+          <div className="p-8 space-y-8 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1" htmlFor="geminiApiKey">Gemini API Key</label>
+                  <div className="relative">
+                    <input
+                      id="geminiApiKey"
+                      type="password"
+                      name="geminiApiKey"
+                      value={formData.geminiApiKey || ''}
+                      onChange={handleInputChange}
+                      placeholder="Enter your Google AI API key"
+                      autoComplete="off"
+                      className="w-full px-5 py-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none text-gray-900 dark:text-white font-mono"
+                    />
+                    <Sparkles className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none" size={18} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 ml-1" htmlFor="geminiModel">AI model version</label>
+                  <select
+                    id="geminiModel"
+                    name="geminiModel"
+                    value={formData.geminiModel || 'gemini-1.5-flash'}
                     onChange={handleInputChange}
-                    placeholder="Enter your Google AI API key"
-                    autoComplete="off"
-                    className="w-full px-5 py-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none text-gray-900 dark:text-white font-mono"
-                  />
-                  <Sparkles className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none" size={18} />
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none text-gray-900 dark:text-white font-bold appearance-none"
+                  >
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recommended - Vision Support)</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful but Slower)</option>
+                    <option value="gemini-1.0-pro">Gemini 1.0 Pro (Standard Text Fallback)</option>
+                  </select>
                 </div>
               </div>
-              <div className="md:w-64 pt-6">
+
+              <div className="space-y-4">
+                <button 
+                  type="button"
+                  onClick={handleVerifyAiKey}
+                  disabled={isTestingAi}
+                  className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all bg-white dark:bg-slate-950 border-2 border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 active:scale-95"
+                >
+                  {isTestingAi ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  {isTestingAi ? 'Verifying Key...' : 'Test AI Connection'}
+                </button>
+                
+                {testResult && (
+                  <div className={`p-4 rounded-2xl border flex items-start gap-3 animate-in fade-in duration-300 ${testResult.success ? 'bg-green-50 border-green-100 text-green-700 dark:bg-green-900/10 dark:border-green-900/20 dark:text-green-400' : 'bg-red-50 border-red-100 text-red-700 dark:bg-red-900/10 dark:border-red-900/20 dark:text-red-400'}`}>
+                    {testResult.success ? <CheckCircle2 size={16} className="shrink-0 mt-0.5" /> : <AlertCircle size={16} className="shrink-0 mt-0.5" />}
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-wider">
+                        {testResult.success ? 'Ready to use!' : 'Verification Failed'}
+                      </span>
+                      <span className="text-[11px] font-medium leading-tight mt-0.5">
+                        {testResult.message === 'READY' ? `Connection established. Serving ${testResult.models?.length} models.` : 
+                         testResult.message === 'API_NOT_ENABLED' ? 'The "Generative Language API" is not enabled in your Google Cloud Console.' :
+                         testResult.message === 'INVALID_KEY' ? 'This API key appears to be invalid or restricted.' :
+                         testResult.message}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <a 
                   href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/30 dark:bg-indigo-900/10 w-full"
+                  className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600/60 dark:text-indigo-400/60 hover:text-indigo-600 transition-colors p-2"
                 >
-                  Get Free API Key <ExternalLink size={14} />
+                  Get Free API Key <ExternalLink size={12} />
                 </a>
               </div>
             </div>
             <p className="text-[11px] text-gray-400 dark:text-slate-500 font-medium leading-relaxed italic">
-              * The Gemini API key enables AI-powered product descriptions. Keys are stored locally in your database. 
-              We recommend using a restricted key for security.
+              * The Gemini API key enables "Magic Describe" for products. We recommend 1.5 Flash for the best vision results.
             </p>
           </div>
         </div>

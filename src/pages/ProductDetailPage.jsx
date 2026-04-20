@@ -6,6 +6,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useStoreData } from '../contexts/StoreDataContext';
 import { ChevronLeft, Plus, Minus, ShoppingCart, X, Maximize2, Heart, MessageCircle } from 'lucide-react';
 import WhatsAppButton from '../components/WhatsAppButton';
+import ProductShareButton from '../components/ProductShareButton';
 import { updateSEO } from '../utils/seoHelper';
 import { useEffect } from 'react';
 
@@ -208,6 +209,8 @@ const ProductDetailPage = () => {
                 >
                   <Heart size={24} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
                 </button>
+
+                <ProductShareButton product={product} />
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">

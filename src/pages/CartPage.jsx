@@ -1,179 +1,177 @@
 import React from 'react';
-import { useCart } from '../contexts/CartContext';
+import { useParams, Link } from 'react-router-dom';
 import { useStoreData } from '../contexts/StoreDataContext';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft, Plus, Minus, Trash2, MessageSquare } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
+import { useWishlist } from '../contexts/WishlistContext';
+import { useToast } from '../contexts/ToastContext';
+import { Heart, ShoppingCart, Eye, MessageCircle } from 'lucide-react';
+import WhatsAppButton from '../components/WhatsAppButton';
+import { updateSEO } from '../utils/seoHelper';
+import { useEffect } from 'react';
 
-const CartPage = () => {
-  const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useCart();
-  const { storeSettings, formatPrice } = useStoreData();
 
-  const handleWhatsAppCheckout = () => {
-    const whatsappNumber = storeSettings?.whatsappNumber;
+const CategoryPage = () => {
+  const { categoryName } = useParams();
+  const { products, categories, formatPrice } = useStoreData();
+  const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { showToast } = useToast();
 
-    if (!whatsappNumber) {
-      alert("WhatsApp checkout is currently unavailable. Please check store settings.");
-      return;
-    }
+  // Find category object by name
+  const category = categories.find(c => c.name.toLowerCase() === decodeURIComponent(categoryName).toLowerCase());
 
-    let message = `*New Order from ${storeSettings.shopName || 'SWEETO-HUB'}*\n`;
-    message += `------------------\n`;
-    message += `*Items:*\n`;
-    
-    cartItems.forEach(item => {
-      message += `- ${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
+  const decodedName = decodeURIComponent(categoryName).toLowerCase();
+
+  // Find child category IDs and Names
+  const childCategoryIds = categories
+    .filter(c => c.parentCategory && c.parentCategory.toLowerCase() === decodedName)
+    .map(c => c.id);
+  const childCategoryNames = categories
+    .filter(c => c.parentCategory && c.parentCategory.toLowerCase() === decodedName)
+    .map(c => c.name.toLowerCase());
+
+  const categoryProducts = products.filter(product => {
+    if (product.status !== 'active') return false;
+
+    // Direct match (product belongs to exact category)
+    if (product.categoryId === category?.id || product.category?.toLowerCase() === decodedName) return true;
+
+    // Child category match (product belongs to a sub-category)
+    if (childCategoryIds.includes(product.categoryId)) return true;
+    if (product.category && childCategoryNames.includes(product.category.toLowerCase())) return true;
+
+    return false;
+  });
+
+  useEffect(() => {
+    updateSEO({
+      title: `${decodeURIComponent(categoryName)} | Sweeto Hubs`,
+      description: `Explore the best selection of ${decodeURIComponent(categoryName)} at Sweeto Hubs. Cyber-premium electronics delivered to you.`,
+      type: 'website'
     });
-    
-    message += `------------------\n`;
-    message += `*Total: ${formatPrice(cartTotal)}*\n\n`;
-    message += `_Generated via Sweeto-Tech Storefront_`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
-  };
+  }, [categoryName]);
 
   return (
     <div className="py-8 bg-gray-50 dark:bg-slate-950 min-h-screen transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            to="/"
-            className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-6 transition-colors group"
-          >
-            <ArrowLeft size={20} className="mr-2 transform group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back to Shopping</span>
-          </Link>
-          <div className="p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800">
-            <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Shopping Cart</h1>
-            <p className="text-gray-500 dark:text-gray-400 flex items-center">
-              <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-bold mr-2">
-                {cartCount} {cartCount === 1 ? 'item' : 'items'}
-              </span>
-              ready for review
-            </p>
-          </div>
+        {/* Page Header */}
+        <div className="mb-8 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{decodeURIComponent(categoryName)}</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {categoryProducts.length} products found in this category
+          </p>
         </div>
 
-        {/* Cart Content */}
-        {cartItems.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 flex items-center space-x-6 hover:shadow-md transition-all duration-300"
-                >
-                  <div className="relative group shrink-0">
+        {/* Products Grid */}
+        {categoryProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {categoryProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-slate-800 group"
+              >
+                <div className="relative overflow-hidden">
+                  <Link to={`/product/${product.id}`}>
                     <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-24 h-24 object-contain rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 group-hover:scale-105 transition-transform duration-300"
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
+                  </Link>
+                  <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+                    {product.originalPrice && product.originalPrice > product.price && (
+                      <span className="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg uppercase tracking-widest animate-pulse">
+                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      </span>
+                    )}
+                    {product.badge && (
+                      <span className="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow-lg uppercase tracking-widest">
+                        {product.badge}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{item.name}</h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-1">{item.tagline}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xl font-black text-blue-600 dark:text-blue-400 block font-mono">
-                          {formatPrice(item.price * item.quantity)}
-                        </span>
-                        {item.quantity > 1 && (
-                          <span className="text-xs text-slate-400 font-bold block">{formatPrice(item.price)} each</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="flex items-center bg-gray-50 dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700">
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-2 text-slate-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="w-10 text-center font-black text-slate-900 dark:text-white">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-2 text-slate-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                      <button 
-                        onClick={() => removeFromCart(item.id)}
-                        className="flex items-center gap-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-sm font-bold transition-all hover:bg-red-50 dark:hover:bg-red-900/10 px-3 py-2 rounded-xl"
-                      >
-                        <Trash2 size={16} />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            {/* Cart Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none p-8 sticky top-24 border border-gray-100 dark:border-slate-800">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Order Summary</h2>
-                <div className="space-y-4 mb-8">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 dark:text-gray-400">Subtotal ({cartCount} items)</span>
-                    <span className="font-bold text-gray-900 dark:text-white font-mono">
-                      {formatPrice(cartTotal)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Estimated Shipping</span>
-                    <span className="text-blue-600 dark:text-blue-400 font-bold uppercase">Calculated at Checkout</span>
+                  {/* Quick Actions (Floating Circles) */}
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                    <button 
+                      onClick={() => {
+                        toggleWishlist(product);
+                        if (!isInWishlist(product.id)) showToast(`Added ${product.name} to wishlist`);
+                      }}
+                      className={`w-9 h-9 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isInWishlist(product.id) 
+                          ? 'bg-red-500 text-white border-red-500' 
+                          : 'bg-white text-slate-900 border-white hover:bg-blue-600 hover:text-white'
+                      }`}
+                    >
+                      <Heart size={16} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        addToCart(product);
+                        showToast(`Added ${product.name} to cart`);
+                      }}
+                      className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"
+                    >
+                      <ShoppingCart size={16} />
+                    </button>
+                    <WhatsAppButton product={product} iconOnly={true} className="w-9 h-9" />
+
+                    <Link 
+                      to={`/product/${product.id}`}
+                      className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"
+                    >
+                      <Eye size={16} />
+                    </Link>
                   </div>
                 </div>
-                <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-8">
-                  <div className="flex justify-between items-end">
-                    <span className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Total Amount</span>
-                    <span className="text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">
-                      {formatPrice(cartTotal)}
-                    </span>
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">
+                    <Link to={`/product/${product.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      {product.name}
+                    </Link>
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2 h-10">{product.tagline}</p>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
+                    <div className="flex flex-col">
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="text-[10px] font-bold text-gray-400 line-through mb-0.5">
+                          {formatPrice(product.originalPrice)}
+                        </span>
+                      )}
+                      <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                        {formatPrice(product.price)}
+                      </span>
+                    </div>
+                    <Link
+                      to={`/product/${product.id}`}
+                      className="text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </Link>
                   </div>
-                </div>
-                <div className="space-y-4">
-                  <button
-                    onClick={handleWhatsAppCheckout}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-2xl font-black transition-all shadow-lg shadow-green-500/30 hover:-translate-y-1 uppercase tracking-widest text-sm flex items-center justify-center gap-2"
-                  >
-                    <MessageSquare size={20} />
-                    Checkout via WhatsApp
-                  </button>
-                  <p className="text-sm text-gray-400 dark:text-slate-500 text-center px-4">
-                    Order processing will be finalized securely through our WhatsApp concierge.
-                  </p>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         ) : (
-          <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 shadow-sm">
-            <div className="text-gray-300 dark:text-slate-800 mb-8 flex justify-center">
-              <div className="p-8 bg-gray-50 dark:bg-slate-950 rounded-full relative">
-                <ShoppingCart size={80} strokeWidth={1} />
-                <div className="absolute top-0 right-0 w-8 h-8 bg-blue-600 rounded-full border-4 border-white dark:border-slate-900 animate-pulse" />
-              </div>
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 shadow-sm">
+            <div className="text-gray-300 dark:text-slate-700 mb-6 flex justify-center">
+              <svg className="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-4">Your cart is empty</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-sm mx-auto text-lg font-medium">
-              Explore our premium tech collection and add some amazing gadgets to your sanctuary.
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No products found</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
+              We couldn't find any active products in this category. Check back later!
             </p>
             <Link
               to="/"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-2xl font-black transition-all shadow-xl shadow-blue-500/30 hover:-translate-y-1 inline-block uppercase tracking-widest text-sm"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 dark:shadow-none translate-y-0 hover:-translate-y-1"
             >
-              Start Discovering
+              Explore Other Products
             </Link>
           </div>
         )}
@@ -182,4 +180,5 @@ const CartPage = () => {
   );
 };
 
-export default CartPage;
+export default CategoryPage;
+

@@ -19,7 +19,7 @@ const Header = () => {
   const { t } = useLocale();
   const { storeSettings, categories, formatPrice } = useStoreData();
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const { user, isAuthenticated, logout } = useUserAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useUserAuth();
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
@@ -121,10 +121,24 @@ const Header = () => {
               <div className="hidden sm:flex items-center group relative">
                 <button className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                   <User size={24} strokeWidth={1.5} />
-                  <span className="text-xs font-bold uppercase hidden lg:block">Account</span>
+                  <div className="text-left hidden lg:block">
+                    <p className="text-[10px] leading-tight font-medium text-gray-400 uppercase">Account</p>
+                    <p className="text-xs font-bold uppercase tracking-wider">{isAdmin ? 'Admin' : (user?.displayName?.split(' ')[0] || 'User')}</p>
+                  </div>
                 </button>
-                <div className="absolute top-10 right-0 w-48 bg-white dark:bg-slate-900 shadow-xl border border-gray-100 dark:border-slate-800 rounded-2xl p-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all transform origin-top-right scale-95 group-hover:scale-100 z-50">
-                  <button onClick={logout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl flex items-center gap-2">
+                <div className="absolute top-10 right-0 w-56 bg-white dark:bg-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-slate-800 rounded-3xl p-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                  <div className="px-4 py-3 mb-2 border-b border-gray-50 dark:border-slate-800">
+                    <p className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">{user?.displayName || 'User'}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{user?.email}</p>
+                  </div>
+                  
+                  {isAdmin && (
+                    <Link to="/admin" className="w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-2xl flex items-center gap-3 transition-colors mb-1">
+                      <Package size={16} /> Admin Panel
+                    </Link>
+                  )}
+
+                  <button onClick={logout} className="w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-2xl flex items-center gap-3 transition-colors">
                     <LogOut size={16} /> Sign out
                   </button>
                 </div>
@@ -216,9 +230,25 @@ const Header = () => {
                 {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
               </button>
 
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest mt-4">
-                Sign In <User size={14} />
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest mt-4 shadow-lg shadow-indigo-600/20">
+                      Admin Panel <Package size={16} />
+                    </Link>
+                  )}
+                  <button 
+                    onClick={() => { logout(); setIsMobileMenuOpen(false); }} 
+                    className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/10 text-red-600 rounded-2xl font-black uppercase text-xs tracking-widest mt-2"
+                  >
+                    Sign Out <LogOut size={16} />
+                  </button>
+                </>
+              ) : (
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest mt-4 shadow-lg shadow-blue-600/20">
+                  Sign In <User size={16} />
+                </Link>
+              )}
             </nav>
 
             <div className="mt-auto pt-10">

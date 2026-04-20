@@ -88,8 +88,11 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
+  const isAdmin = user?.email === 'sweeto@sweeto.com';
+
   const value = {
     isAuthenticated,
+    isAdmin,
     user,
     login,
     register,

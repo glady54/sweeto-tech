@@ -184,31 +184,36 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button
-                onClick={handleAddToCart}
-                className="flex-grow bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-xl shadow-blue-200 dark:shadow-none flex items-center justify-center space-x-3 transform active:scale-95"
-              >
-                <ShoppingCart size={24} />
-                <span>Add to Cart</span>
-              </button>
+            <div className="space-y-4 mb-8">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={handleAddToCart}
+                  className="flex-grow bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-xl shadow-blue-200 dark:shadow-none flex items-center justify-center space-x-3 transform active:scale-95"
+                >
+                  <ShoppingCart size={24} />
+                  <span>Add to Cart</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    toggleWishlist(product);
+                    if (!isInWishlist(product.id)) showToast(`Added ${product.name} to wishlist`);
+                  }}
+                  className={`px-6 py-4 rounded-2xl border-2 transition-all flex items-center justify-center transform active:scale-95 ${
+                    isInWishlist(product.id)
+                      ? 'bg-red-50 border-red-200 text-red-600'
+                      : 'bg-white border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-100'
+                  }`}
+                  title={isInWishlist(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                >
+                  <Heart size={24} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                </button>
+              </div>
               
-              <WhatsAppButton product={product} />
-              
-              <button
-                onClick={() => {
-                  toggleWishlist(product);
-                  if (!isInWishlist(product.id)) showToast(`Added ${product.name} to wishlist`);
-                }}
-                className={`px-6 py-4 rounded-2xl border-2 transition-all flex items-center justify-center transform active:scale-95 ${
-                  isInWishlist(product.id)
-                    ? 'bg-red-50 border-red-200 text-red-600'
-                    : 'bg-white border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-100'
-                }`}
-                title={isInWishlist(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
-              >
-                <Heart size={24} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <WhatsAppButton product={product} />
+                <WhatsAppButton product={product} type="inquiry" />
+              </div>
             </div>
 
             {/* Product Info */}

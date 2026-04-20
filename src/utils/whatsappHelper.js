@@ -32,3 +32,33 @@ export const getWhatsAppLink = (phone, productName, productPrice, shopName = 'SW
   
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 };
+
+/**
+ * Helper to generate a WhatsApp link for checking availability
+ * @param {string} phone - The WhatsApp number
+ * @param {string} productName - Name of the product
+ * @param {string} shopName - Name of the shop
+ * @param {string} imageUrl - Product image URL
+ * @returns {string} - The WhatsApp URL
+ */
+export const getInquiryWhatsAppLink = (phone, productName, shopName = 'SWEETO-HUB', imageUrl = '') => {
+  if (!phone) return null;
+  
+  const cleanPhone = phone.replace(/\D/g, '');
+  let message = '';
+  
+  if (imageUrl && imageUrl.startsWith('http')) {
+    message += `${imageUrl}\n\n`;
+  }
+  
+  message += `*🙋‍♂️ AVAILABILITY INQUIRY - ${shopName.toUpperCase()}*\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `Hello! I'm interested in the following product:\n\n`;
+  message += `*Product:* ${productName}\n\n`;
+  message += `Is this item currently available in stock?\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `_Sent from Sweeto-Tech Storefront_`;
+
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+};

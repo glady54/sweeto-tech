@@ -118,7 +118,7 @@ const FeaturedProductsGrid = () => {
                   <div className="flex flex-col min-w-0">
                     <p className="text-[10px] sm:text-sm font-black text-blue-600 tracking-tighter truncate">{formatPrice(product.price)}</p>
                   </div>
-                  <WhatsAppButton product={product} iconOnly={true} />
+                  <WhatsAppButton product={product} iconOnly={true} type="inquiry" />
                 </div>
               </div>
             </div>

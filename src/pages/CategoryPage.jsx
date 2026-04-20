@@ -115,7 +115,7 @@ const CategoryPage = () => {
                     >
                       <ShoppingCart size={16} />
                     </button>
-                    <WhatsAppButton product={product} iconOnly={true} className="w-9 h-9" />
+                    <WhatsAppButton product={product} iconOnly={true} type="inquiry" className="w-9 h-9" />
 
                     <Link 
                       to={`/product/${product.id}`}

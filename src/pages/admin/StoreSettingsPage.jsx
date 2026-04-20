@@ -3,6 +3,7 @@ import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Settings, Save, Globe, Banknote, Mail, Info, Image as ImageIcon, Plus, Sparkles, ExternalLink, Loader2, MessageSquare, Phone, MapPin, Share2, Camera, MessageCircle } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
+import { uploadToStorage } from '../../utils/firebaseStorage';
 
 const StoreSettingsPage = () => {
   const { storeSettings, updateStoreSettings } = useStoreData();
@@ -12,6 +13,7 @@ const StoreSettingsPage = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Sync internal form state if store settings load after initial mount
   React.useEffect(() => {
@@ -32,11 +34,15 @@ const StoreSettingsPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const compressedBase64 = await compressImage(file);
-        setFormData(prev => ({ ...prev, shopLogo: compressedBase64 }));
+        setIsUploadingLogo(true);
+        const compressedBlob = await compressImage(file);
+        const downloadURL = await uploadToStorage(compressedBlob, 'branding');
+        setFormData(prev => ({ ...prev, shopLogo: downloadURL }));
       } catch (err) {
         console.error("Error processing shop logo image:", err);
-        setSuccess("Failed to process image. Please try another one.");
+        setError("Failed to process image. Please try another one.");
+      } finally {
+        setIsUploadingLogo(false);
       }
     }
   };
@@ -107,8 +113,8 @@ const StoreSettingsPage = () => {
                       placeholder="Logo URL or upload"
                     />
                   </div>
-                  <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center shrink-0 hover:-rotate-6">
-                    <Plus size={24} />
+                  <label className={`cursor-pointer ${isUploadingLogo ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white p-4 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center shrink-0 hover:-rotate-6`}>
+                    {isUploadingLogo ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} />}
                     <input 
                       type="file" 
                       id="shopLogoUpload"

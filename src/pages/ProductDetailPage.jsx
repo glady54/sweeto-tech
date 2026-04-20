@@ -88,13 +88,13 @@ const ProductDetailPage = () => {
           {/* Product Image Gallery */}
           <div className="space-y-4">
             <div 
-              className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center relative group cursor-pointer"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-8 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center relative group cursor-pointer"
               onClick={() => setIsLightboxOpen(true)}
             >
               <img
                 src={activeImage || product.image}
                 alt={product.name}
-                className="w-full h-[500px] object-contain transition-all duration-300 transform group-hover:scale-105"
+                className="w-full h-[300px] sm:h-[400px] lg:h-[500px] object-contain transition-all duration-300 transform group-hover:scale-105"
               />
               <div className="absolute top-4 right-4 bg-black/10 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                 <Maximize2 size={20} className="text-gray-800 dark:text-gray-200" />
@@ -136,7 +136,7 @@ const ProductDetailPage = () => {
               )}
             </div>
             
-            <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
+            <h1 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
             
             <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">{product.tagline}</p>
             

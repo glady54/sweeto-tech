@@ -32,8 +32,8 @@ const CategoryBanners = () => {
   ];
 
   return (
-    <section className="max-w-[1400px] mx-auto px-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 overflow-hidden">
         {bannerCategories.map((cat, i) => {
           // Pick first product image from this category as the banner visual
           const catProduct = products.find(p => p.categoryId?.toString() === cat.id?.toString() && p.status === 'active' && p.image);

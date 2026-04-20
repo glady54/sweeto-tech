@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
-import { Plus, Trash2, Tag, AlertCircle, Image as ImageIcon, Pencil, X, Save } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
+import { uploadToStorage } from '../../utils/firebaseStorage';
+import { Loader2 } from 'lucide-react';
 
 const CategoryManagerPage = () => {
   const { categories, addCategory, deleteCategory, updateCategory } = useStoreData();
@@ -17,17 +18,22 @@ const CategoryManagerPage = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const compressedBase64 = await compressImage(file);
-        setCategoryImage(compressedBase64);
+        setIsUploading(true);
+        const compressedBlob = await compressImage(file);
+        const downloadURL = await uploadToStorage(compressedBlob, 'categories');
+        setCategoryImage(downloadURL);
         setError('');
       } catch (err) {
         console.error("Error processing category image:", err);
         setError("Failed to process image. Please try another one.");
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -184,9 +190,9 @@ const CategoryManagerPage = () => {
                 />
                 <label
                   htmlFor="category-image-upload"
-                  className="p-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 cursor-pointer transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center shrink-0 hover:-rotate-6"
+                  className={`p-4 ${isUploading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-2xl cursor-pointer transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center shrink-0 hover:-rotate-6`}
                 >
-                  <Plus size={24} />
+                  {isUploading ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} />}
                 </label>
               </div>
             </div>

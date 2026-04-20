@@ -15,17 +15,17 @@ export const getWhatsAppLink = (phone, productName, productPrice, shopName = 'SW
   // Build the message following the exact requested format
   let message = '';
   
-  // Only include the image if it is a URL (not a Base64 string)
+  // Start with the image URL to trigger WhatsApp link preview
   if (imageUrl && imageUrl.startsWith('http')) {
     message += `${imageUrl}\n\n`;
   }
-
-  message += `*New Order from ${shopName}*\n`;
-  message += `------------------\n`;
+  
+  message += `*📦 NEW ORDER - ${shopName.toUpperCase()}*\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
   message += `*Items:*\n`;
-  message += `- ${productName} (x1) - ${productPrice}\n`;
-  message += `------------------\n`;
-  message += `*Total: ${productPrice}*\n\n`;
+  message += `• ${productName} (x1) - ${productPrice}\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `*Total Amount: ${productPrice}*\n\n`;
   message += `_Generated via Sweeto-Tech Storefront_`;
 
   const encodedMessage = encodeURIComponent(message);

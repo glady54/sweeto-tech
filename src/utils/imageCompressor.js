@@ -35,21 +35,20 @@ export const compressImage = async (file, maxWidth = 1200, maxHeight = 1200) => 
           
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Get the data URL with quality adjustment
-          // Use a slightly higher quality for 'premium' feel but keep it efficient
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          // Get the blob with quality adjustment
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Canvas export failed'));
+              return;
+            }
+            resolve(blob);
+          }, 'image/jpeg', 0.85);
           
-          // Safety check: if the result is somehow empty or invalid
-          if (!compressedDataUrl || compressedDataUrl === 'data:,') {
-            throw new Error('Canvas export failed');
-          }
-          
-          resolve(compressedDataUrl);
         } catch (error) {
           console.error('Image compression error:', error);
           // Fallback: return original if it's small enough, or reject
           if (file.size < 2 * 1024 * 1024) { // 2MB
-             resolve(event.target.result);
+             resolve(file);
           } else {
              reject(new Error('Failed to process large image. Try a smaller file.'));
           }

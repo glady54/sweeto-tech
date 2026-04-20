@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
+import LoadingScreen from '../components/LoadingScreen';
 
 const UserAuthContext = createContext();
 
@@ -24,17 +25,25 @@ export const UserAuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const startTime = Date.now();
+    const MINIMUM_LOADING_MS = 2000; // 2 seconds
+
     // Listen to Firebase authentication state for Customers
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Exclude the admin user from customer context logic if needed, 
-      // but generally it's fine if admin appears logged in here.
       if (currentUser && currentUser.email === 'sweeto@sweeto.com') {
-          // If the admin is browsing the storefront, log them out of the customer context
-          // or just treat them as a normal user in the storefront. Let's treat them as normal user for storefront views.
+          // Admin viewing storefront treatment (optional logic)
       }
       setUser(currentUser);
       setIsAuthenticated(!!currentUser);
-      setLoading(false);
+      
+      const elapsed = Date.now() - startTime;
+      const remainingTime = MINIMUM_LOADING_MS - elapsed;
+
+      if (remainingTime > 0) {
+        setTimeout(() => setLoading(false), remainingTime);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();
@@ -90,7 +99,7 @@ export const UserAuthProvider = ({ children }) => {
 
   return (
     <UserAuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? <LoadingScreen /> : children}
     </UserAuthContext.Provider>
   );
 };

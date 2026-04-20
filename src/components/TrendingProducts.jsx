@@ -16,9 +16,9 @@ const TrendingProducts = () => {
   const [activeTab, setActiveTab] = useState('new');
 
   const tabs = [
-    { id: 'new', label: 'New Products' },
-    { id: 'all', label: 'Best Sellers' },
-    { id: 'featured', label: 'Trending' },
+    { id: 'new', label: 'New' },
+    { id: 'all', label: 'Best' },
+    { id: 'featured', label: 'Trend' },
   ];
 
   const getFilteredProducts = () => {
@@ -42,19 +42,18 @@ const TrendingProducts = () => {
   }
 
   return (
-    <section className="max-w-[1400px] mx-auto px-4">
+    <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 overflow-hidden">
       <div className="text-center mb-12">
-        <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-4">Trending Now</h2>
-        <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+        <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-4">Trending Now</h2>
+        <div className="flex justify-center gap-6 sm:gap-12">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative py-2 text-sm font-black uppercase tracking-widest transition-all ${
-                activeTab === tab.id
+              className={`relative py-2 text-[10px] sm:text-sm font-black uppercase tracking-widest transition-all ${activeTab === tab.id
                   ? 'text-blue-600'
                   : 'text-slate-400 hover:text-slate-600'
-              }`}
+                }`}
             >
               {tab.label}
               {activeTab === tab.id && (
@@ -65,37 +64,36 @@ const TrendingProducts = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-8 w-full overflow-hidden">
         {filteredProducts.map((product) => (
-          <div key={product.id} className="group flex flex-col h-full transition-all duration-300">
+          <div key={product.id} className="group flex flex-col h-full transition-all duration-300 min-w-0 w-full relative">
             {/* Image Container */}
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-slate-50 border border-slate-100 mb-6 flex-shrink-0">
-              <Link to={`/product/${product.id}`} className="block h-full w-full p-8">
-                <div className="w-full h-full">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-xl sm:rounded-[2rem] bg-slate-50 border border-slate-100 mb-3 sm:mb-6 flex-shrink-0">
+              <Link to={`/product/${product.id}`} className="block h-full w-full p-2 sm:p-8">
+                <div className="w-full h-full flex items-center justify-center">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+                    className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
                   />
                 </div>
               </Link>
-              
+
               {/* Overlay Actions */}
               <div className="absolute top-4 right-4 flex flex-col gap-2 translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                <button 
+                <button
                   onClick={() => {
                     toggleWishlist(product);
                     if (!isInWishlist(product.id)) showToast(`Added ${product.name} to wishlist`);
                   }}
-                  className={`w-10 h-10 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 ${
-                    isInWishlist(product.id) 
-                      ? 'bg-red-500 text-white border-red-500' 
+                  className={`w-10 h-10 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 ${isInWishlist(product.id)
+                      ? 'bg-red-500 text-white border-red-500'
                       : 'bg-white text-slate-900 border-white hover:bg-blue-600 hover:text-white'
-                  }`}
+                    }`}
                 >
                   <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     addToCart(product);
                     showToast(`Added ${product.name} to cart`);
@@ -136,11 +134,11 @@ const TrendingProducts = () => {
                   ({product.reviewsCount || (parseInt(String(product.id).slice(-2)) || 0) + 15})
                 </span>
               </div>
-              
+
               <Link to={`/product/${product.id}`} className="block text-lg font-black text-slate-900 mb-4 line-clamp-1 hover:text-blue-600 transition-colors tracking-tighter">
                 {product.name}
               </Link>
-              
+
               {/* Force bottom alignment for the price block */}
               <div className="flex items-end justify-between mt-auto">
                 <div className="flex flex-col">
@@ -158,7 +156,7 @@ const TrendingProducts = () => {
           </div>
         ))}
       </div>
-      
+
       <div className="mt-16 text-center">
         <Link to="/shop" className="inline-flex items-center gap-3 bg-slate-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-blue-600 transition-all hover:gap-5 shadow-2xl">
           Discover More Products <ArrowRight size={20} />

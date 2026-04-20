@@ -15,11 +15,13 @@ export const useWishlist = () => {
 
 export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useUserAuth();
 
   // Load wishlist from localStorage or Firestore on mount/login
   useEffect(() => {
     const loadWishlist = async () => {
+      setIsLoaded(false);
       let localWishlist = [];
       const savedWishlist = localStorage.getItem('wishlist');
       if (savedWishlist) {
@@ -54,6 +56,7 @@ export const WishlistProvider = ({ children }) => {
       } else {
         setWishlistItems(localWishlist);
       }
+      setIsLoaded(true);
     };
 
     loadWishlist();
@@ -61,6 +64,8 @@ export const WishlistProvider = ({ children }) => {
 
   // Save wishlist to localStorage OR cloud when it changes
   useEffect(() => {
+    if (!isLoaded) return; // Prevent overwriting cloud with empty state on login
+
     if (wishlistItems.length > 0 || localStorage.getItem('wishlist')) {
       localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
     }
@@ -81,7 +86,7 @@ export const WishlistProvider = ({ children }) => {
 
       return () => clearTimeout(debounce);
     }
-  }, [wishlistItems, user]);
+  }, [wishlistItems, user, isLoaded]);
 
   const toggleWishlist = (product) => {
     setWishlistItems(prev => {

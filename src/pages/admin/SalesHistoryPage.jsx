@@ -82,7 +82,7 @@ const SalesHistoryPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-500">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('salesHistory')}</h1>
@@ -102,7 +102,7 @@ const SalesHistoryPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1 relative">

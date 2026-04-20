@@ -15,11 +15,13 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = React.useState([]);
+  const [isLoaded, setIsLoaded] = React.useState(false);
   const { user } = useUserAuth();
 
   // Load cart from localStorage or Firestore on mount/login
   useEffect(() => {
     const loadCart = async () => {
+      setIsLoaded(false);
       let localCart = [];
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
@@ -56,6 +58,7 @@ export const CartProvider = ({ children }) => {
       } else {
         setCartItems(localCart);
       }
+      setIsLoaded(true);
     };
 
     loadCart();
@@ -63,6 +66,8 @@ export const CartProvider = ({ children }) => {
 
   // Save cart to localStorage OR cloud when it changes
   useEffect(() => {
+    if (!isLoaded) return; // Prevent overwriting cloud with empty state on login
+
     if (cartItems.length > 0 || localStorage.getItem('cart')) {
       localStorage.setItem('cart', JSON.stringify(cartItems));
     }
@@ -83,7 +88,7 @@ export const CartProvider = ({ children }) => {
 
       return () => clearTimeout(debounce);
     }
-  }, [cartItems, user]);
+  }, [cartItems, user, isLoaded]);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);

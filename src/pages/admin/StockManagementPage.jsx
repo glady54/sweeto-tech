@@ -112,7 +112,7 @@ const StockManagementPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-500">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{t('stockManagement')}</h1>
@@ -135,7 +135,7 @@ const StockManagementPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search */}
         <div className="mb-6 relative">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />

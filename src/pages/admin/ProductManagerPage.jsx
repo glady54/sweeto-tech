@@ -3,6 +3,7 @@ import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Plus, Package, Trash2, Edit, AlertCircle, CheckCircle2, Image as ImageIcon, X, Sparkles, Loader2, Check } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
+import { uploadToStorage } from '../../utils/firebaseStorage';
 import { generateAIProductDescription } from '../../utils/aiService';
 
 const ProductManagerPage = () => {
@@ -27,6 +28,8 @@ const ProductManagerPage = () => {
   const [success, setSuccess] = useState('');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,12 +40,16 @@ const ProductManagerPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const compressedBase64 = await compressImage(file);
-        setFormData(prev => ({ ...prev, image: compressedBase64 }));
+        setIsUploadingImage(true);
+        const compressedBlob = await compressImage(file);
+        const downloadURL = await uploadToStorage(compressedBlob, 'products');
+        setFormData(prev => ({ ...prev, image: downloadURL }));
         setError('');
       } catch (err) {
         console.error("Error processing image:", err);
         setError("Failed to process image. Please try another one.");
+      } finally {
+        setIsUploadingImage(false);
       }
     }
   };
@@ -55,12 +62,16 @@ const ProductManagerPage = () => {
         return;
       }
       try {
-        const compressedBase64 = await compressImage(file);
-        setFormData(prev => ({ ...prev, additionalImages: [...(prev.additionalImages || []), compressedBase64] }));
+        setIsUploadingAdditional(true);
+        const compressedBlob = await compressImage(file);
+        const downloadURL = await uploadToStorage(compressedBlob, 'products/additional');
+        setFormData(prev => ({ ...prev, additionalImages: [...(prev.additionalImages || []), downloadURL] }));
         setError('');
       } catch (err) {
         console.error("Error processing additional image:", err);
         setError("Failed to process image. Please try another one.");
+      } finally {
+        setIsUploadingAdditional(false);
       }
     }
   };
@@ -213,7 +224,7 @@ const ProductManagerPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto transition-colors duration-500 min-h-screen">
+    <div className="p-6 w-full max-w-[1920px] mx-auto transition-colors duration-500 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
           <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2 tracking-tight italic uppercase">{t('productManagement')}</h1>
@@ -351,8 +362,8 @@ const ProductManagerPage = () => {
                       className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none text-gray-900 dark:text-white text-sm"
                     />
                   </div>
-                  <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center shrink-0 hover:-rotate-6">
-                    <Plus size={24} />
+                  <label className={`cursor-pointer ${isUploadingImage ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white p-4 rounded-2xl transition-all shadow-xl shadow-blue-500/30 flex items-center justify-center shrink-0 hover:-rotate-6`}>
+                    {isUploadingImage ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} />}
                     <input
                       type="file"
                       id="productImageUpload"
@@ -360,6 +371,7 @@ const ProductManagerPage = () => {
                       className="hidden"
                       accept="image/*"
                       onChange={handleImageUpload}
+                      disabled={isUploadingImage}
                     />
                   </label>
                 </div>
@@ -377,10 +389,10 @@ const ProductManagerPage = () => {
                     </div>
                   ))}
                   {(!formData.additionalImages || formData.additionalImages.length < 3) && (
-                    <label className="cursor-pointer w-24 h-24 flex items-center justify-center flex-col bg-gray-50 dark:bg-slate-950/50 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors text-gray-400 hover:text-blue-600">
-                      <Plus size={24} className="mb-1" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Add More</span>
-                      <input id="additionalImageUpload" name="additionalImageUpload" type="file" className="hidden" accept="image/*" onChange={handleAdditionalImageUpload} />
+                    <label className={`cursor-pointer w-24 h-24 flex items-center justify-center flex-col bg-gray-50 dark:bg-slate-950/50 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors text-gray-400 hover:text-blue-600 ${isUploadingAdditional ? 'opacity-50' : ''}`}>
+                      {isUploadingAdditional ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} className="mb-1" />}
+                      <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingAdditional ? 'Uploading...' : 'Add More'}</span>
+                      <input id="additionalImageUpload" name="additionalImageUpload" type="file" className="hidden" accept="image/*" onChange={handleAdditionalImageUpload} disabled={isUploadingAdditional} />
                     </label>
                   )}
                 </div>

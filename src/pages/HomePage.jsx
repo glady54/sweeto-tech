@@ -25,9 +25,6 @@ const HomePage = () => {
         {/* 2. Featured Products with tabs + promo card */}
         <FeaturedProductsGrid />
 
-        {/* 3. Just Arrived horizontal strip + discount banner */}
-        <JustArrivedSection />
-
         {/* 4. Category promo banners (3 wide cards) */}
         <CategoryBanners />
 

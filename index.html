@@ -17,12 +17,21 @@
       (function() {
         try {
           var userLang = navigator.language || navigator.userLanguage; 
-          var langCode = userLang.split('-')[0];
+          var langCode = userLang ? userLang.split('-')[0] : 'en';
           
+          // Only auto-translate if not English and cookie isn't already set
           if (langCode !== 'en' && document.cookie.indexOf('googtrans') === -1) {
+            // Set for current domain
             document.cookie = "googtrans=/en/" + langCode + "; path=/";
             if (window.location.hostname !== 'localhost') {
-              document.cookie = "googtrans=/en/" + langCode + "; domain=" + window.location.hostname + "; path=/";
+              // Set for .domain as well
+              document.cookie = "googtrans=/en/" + langCode + "; domain=." + window.location.hostname + "; path=/";
+            }
+            
+            // Check if we already tried to reload to prevent infinite loops in private browsers
+            if (!sessionStorage.getItem('googtrans_reloaded')) {
+              sessionStorage.setItem('googtrans_reloaded', 'true');
+              window.location.reload();
             }
           }
         } catch(e) { console.error("Translation error", e); }

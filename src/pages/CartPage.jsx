@@ -1,184 +1,195 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useStoreData } from '../contexts/StoreDataContext';
 import { useCart } from '../contexts/CartContext';
-import { useWishlist } from '../contexts/WishlistContext';
-import { useToast } from '../contexts/ToastContext';
-import { Heart, ShoppingCart, Eye, MessageCircle } from 'lucide-react';
-import WhatsAppButton from '../components/WhatsAppButton';
-import { updateSEO } from '../utils/seoHelper';
-import { useEffect } from 'react';
+import { useStoreData } from '../contexts/StoreDataContext';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getWhatsAppLink } from '../utils/whatsappHelper';
 
+const CartPage = () => {
+  const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+  const { formatPrice, storeSettings } = useStoreData();
 
-const CategoryPage = () => {
-  const { categoryName } = useParams();
-  const { products, categories, formatPrice } = useStoreData();
-  const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
-  const { showToast } = useToast();
-
-  // Find category object by name
-  const category = categories.find(c => c.name.toLowerCase() === decodeURIComponent(categoryName).toLowerCase());
-
-  const decodedName = decodeURIComponent(categoryName).toLowerCase();
-
-  // Find child category IDs and Names
-  const childCategoryIds = categories
-    .filter(c => c.parentCategory && c.parentCategory.toLowerCase() === decodedName)
-    .map(c => c.id);
-  const childCategoryNames = categories
-    .filter(c => c.parentCategory && c.parentCategory.toLowerCase() === decodedName)
-    .map(c => c.name.toLowerCase());
-
-  const categoryProducts = products.filter(product => {
-    if (product.status !== 'active') return false;
-
-    // Direct match (product belongs to exact category)
-    if (product.categoryId === category?.id || product.category?.toLowerCase() === decodedName) return true;
-
-    // Child category match (product belongs to a sub-category)
-    if (childCategoryIds.includes(product.categoryId)) return true;
-    if (product.category && childCategoryNames.includes(product.category.toLowerCase())) return true;
-
-    return false;
-  });
-
-  useEffect(() => {
-    updateSEO({
-      title: `${decodeURIComponent(categoryName)} | Sweeto Hubs`,
-      description: `Explore the best selection of ${decodeURIComponent(categoryName)} at Sweeto Hubs. Cyber-premium electronics delivered to you.`,
-      type: 'website'
+  const handleWhatsAppCheckout = () => {
+    // Collect all items for the message
+    let itemsText = '';
+    cartItems.forEach(item => {
+      itemsText += `${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
     });
-  }, [categoryName]);
+
+    const shopName = storeSettings.shopName || 'SWEETO-HUB';
+    const phone = storeSettings.whatsappNumber || '237699999999'; // Fallback
+    
+    // For cart checkout, we use a slightly different summary
+    let message = '';
+    
+    // Add the first item's image at the top to trigger WhatsApp preview
+    if (cartItems.length > 0 && cartItems[0].image && cartItems[0].image.startsWith('http')) {
+      message += `${cartItems[0].image}\n\n`;
+    }
+
+    message += `*📦 NEW ORDER - ${shopName.toUpperCase()}*\n`;
+    message += `━━━━━━━━━━━━━━━━━━\n`;
+    message += `*Items:*\n`;
+    
+    cartItems.forEach(item => {
+      message += `• ${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
+    });
+    
+    message += `━━━━━━━━━━━━━━━━━━\n`;
+    message += `*Total Amount: ${formatPrice(cartTotal)}*\n\n`;
+    message += `_Generated via Sweeto-Tech Storefront_`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodedMessage}`, '_blank');
+  };
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 bg-gray-50 dark:bg-slate-950 transition-colors">
+        <div className="bg-white dark:bg-slate-900 p-10 lg:p-16 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-slate-800 text-center max-w-lg w-full transform hover:scale-[1.02] transition-transform duration-500">
+          <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+            <ShoppingBag className="text-blue-600 dark:text-blue-400" size={40} />
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4 tracking-tighter">Your cart is empty</h2>
+          <p className="text-gray-500 dark:text-slate-400 mb-10 text-lg font-medium leading-relaxed">
+            Looks like you haven't added anything to your cart yet. Explore our premium tech collection and find something amazing.
+          </p>
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all shadow-xl shadow-blue-500/30 hover:-translate-y-1 active:translate-y-0"
+          >
+            Start Shopping <ArrowRight size={18} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="py-8 bg-gray-50 dark:bg-slate-950 min-h-screen transition-colors">
+    <div className="py-12 bg-gray-50 dark:bg-slate-950 min-h-screen transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Page Header */}
-        <div className="mb-8 p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{decodeURIComponent(categoryName)}</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {categoryProducts.length} products found in this category
-          </p>
+        <div className="flex flex-col lg:flex-row justify-between items-end mb-10 gap-4">
+          <div className="relative">
+            <span className="absolute -top-6 left-0 text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400">Checkout Process</span>
+            <h1 className="text-4xl lg:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Shopping Cart</h1>
+          </div>
+          <button 
+            onClick={clearCart}
+            className="text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 pb-1 border-b-2 border-transparent hover:border-red-500/30"
+          >
+            <Trash2 size={14} /> Clear All Items
+          </button>
         </div>
 
-        {/* Products Grid */}
-        {categoryProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {categoryProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-slate-800 group"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Cart Items List */}
+          <div className="lg:col-span-8 space-y-6">
+            {cartItems.map((item) => (
+              <div 
+                key={item.id} 
+                className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 lg:p-8 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-8 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 group"
               >
-                <div className="relative overflow-hidden">
-                  <Link to={`/product/${product.id}`}>
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </Link>
-                  <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-                    {product.originalPrice && product.originalPrice > product.price && (
-                      <span className="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg uppercase tracking-widest animate-pulse">
-                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                      </span>
-                    )}
-                    {product.badge && (
-                      <span className="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow-lg uppercase tracking-widest">
-                        {product.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Quick Actions (Floating Circles) */}
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 z-10">
-                    <button 
-                      onClick={() => {
-                        toggleWishlist(product);
-                        if (!isInWishlist(product.id)) showToast(`Added ${product.name} to wishlist`);
-                      }}
-                      className={`w-9 h-9 shadow-lg rounded-full flex items-center justify-center transition-all duration-300 ${
-                        isInWishlist(product.id) 
-                          ? 'bg-red-500 text-white border-red-500' 
-                          : 'bg-white text-slate-900 border-white hover:bg-blue-600 hover:text-white'
-                      }`}
-                    >
-                      <Heart size={16} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        addToCart(product);
-                        showToast(`Added ${product.name} to cart`);
-                      }}
-                      className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"
-                    >
-                      <ShoppingCart size={16} />
-                    </button>
-                    <WhatsAppButton product={product} iconOnly={true} className="w-9 h-9" />
-
-                    <Link 
-                      to={`/product/${product.id}`}
-                      className="w-9 h-9 bg-white shadow-lg rounded-full flex items-center justify-center text-slate-900 hover:bg-blue-600 hover:text-white transition-all duration-300"
-                    >
-                      <Eye size={16} />
-                    </Link>
-                  </div>
+                {/* Product Image */}
+                <div className="relative shrink-0 w-32 h-32 lg:w-40 lg:h-40 bg-gray-50 dark:bg-slate-950 rounded-2xl flex items-center justify-center p-4 overflow-hidden border border-gray-100 dark:border-slate-800 transition-all group-hover:border-blue-500/30">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                  />
                 </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">
-                    <Link to={`/product/${product.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                      {product.name}
-                    </Link>
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2 h-10">{product.tagline}</p>
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
-                    <div className="flex flex-col">
-                      {product.originalPrice && product.originalPrice > product.price && (
-                        <span className="text-[10px] font-bold text-gray-400 line-through mb-0.5">
-                          {formatPrice(product.originalPrice)}
-                        </span>
-                      )}
-                      <span className="text-xl font-black text-blue-600 dark:text-blue-400">
-                        {formatPrice(product.price)}
-                      </span>
+
+                {/* Product Details */}
+                <div className="flex-grow text-center sm:text-left space-y-2">
+                  <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-4">
+                    <div>
+                      <h3 className="text-xl lg:text-2xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">{item.name}</h3>
+                      <p className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-[0.2em]">{item.tagline || 'Premium Selection'}</p>
                     </div>
-                    <Link
-                      to={`/product/${product.id}`}
-                      className="text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 transition-colors"
+                    <div className="flex flex-col items-center sm:items-end">
+                      <span className="text-2xl font-black text-gray-900 dark:text-white mb-1">{formatPrice(item.price * item.quantity)}</span>
+                      {item.quantity > 1 && (
+                        <span className="text-[10px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest">{formatPrice(item.price)} each</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center sm:justify-between gap-6 pt-6 mt-4 border-t border-gray-50 dark:border-slate-800">
+                    <div className="flex items-center bg-gray-50 dark:bg-slate-950 p-1.5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-inner">
+                      <button 
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400 transition-all hover:bg-white dark:hover:bg-slate-800 rounded-xl"
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="w-12 text-center font-black text-lg text-gray-900 dark:text-white">{item.quantity}</span>
+                      <button 
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400 transition-all hover:bg-white dark:hover:bg-slate-800 rounded-xl"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    
+                    <button 
+                      onClick={() => removeFromCart(item.id)}
+                      className="flex items-center gap-2 text-red-400 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 text-[10px] font-black uppercase tracking-widest transition-all px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </Link>
+                      <Trash2 size={14} /> Remove Item
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 shadow-sm">
-            <div className="text-gray-300 dark:text-slate-700 mb-6 flex justify-center">
-              <svg className="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+
+          {/* Order Summary Sidebar */}
+          <div className="lg:col-span-4 lg:sticky lg:top-24 h-fit">
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 lg:p-10 shadow-2xl border border-gray-100 dark:border-slate-800 relative overflow-hidden group">
+              {/* Cinematic Background Elements */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+              
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 tracking-tighter relative z-10">Order Summary</h2>
+              
+              <div className="space-y-4 mb-8 relative z-10">
+                <div className="flex justify-between items-center text-gray-500 dark:text-slate-400 font-medium">
+                  <span>Subtotal</span>
+                  <span className="text-gray-900 dark:text-white">{formatPrice(cartTotal)}</span>
+                </div>
+                <div className="flex justify-between items-center text-gray-500 dark:text-slate-400 font-medium">
+                  <span>Delivery fee</span>
+                  <span className="text-green-600 dark:text-green-400 font-bold uppercase text-[10px] tracking-widest">Free</span>
+                </div>
+                <div className="pt-6 mt-6 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                  <span className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Total</span>
+                  <span className="text-3xl font-black text-blue-600 dark:text-blue-400">{formatPrice(cartTotal)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+                <button 
+                  onClick={handleWhatsAppCheckout}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all shadow-xl shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95 group/btn"
+                >
+                  <MessageCircle size={20} className="group-hover/btn:rotate-12 transition-transform" /> Checkout with WhatsApp
+                </button>
+                <Link 
+                  to="/" 
+                  className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-black dark:hover:bg-slate-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-2"
+                >
+                  Continue Shopping
+                </Link>
+              </div>
+
+              <p className="mt-8 text-center text-gray-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-[0.15em] leading-relaxed relative z-10">
+                Fast Processing • Guaranteed Delivery <br />
+                Security Powered by WhatsApp
+              </p>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No products found</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
-              We couldn't find any active products in this category. Check back later!
-            </p>
-            <Link
-              to="/"
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 dark:shadow-none translate-y-0 hover:-translate-y-1"
-            >
-              Explore Other Products
-            </Link>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default CategoryPage;
-
+export default CartPage;

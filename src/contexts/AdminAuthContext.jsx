@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
+import LoadingScreen from '../components/LoadingScreen';
 
 const AdminAuthContext = createContext();
 
@@ -18,11 +19,22 @@ export const AdminAuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const startTime = Date.now();
+    const MINIMUM_LOADING_MS = 2000; // 2 seconds
+
     // Listen to Firebase authentication state
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthenticated(!!currentUser);
-      setLoading(false);
+      
+      const elapsed = Date.now() - startTime;
+      const remainingTime = MINIMUM_LOADING_MS - elapsed;
+
+      if (remainingTime > 0) {
+        setTimeout(() => setLoading(false), remainingTime);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();
@@ -63,7 +75,7 @@ export const AdminAuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#020617', color: '#60a5fa' }}>Verifying Identity...</div>;
+    return <LoadingScreen />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import fs from 'fs';
 
 // Firebase configuration from src/firebase.js
@@ -15,6 +16,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Read db.json
 const dbPath = './backend/db.json';
@@ -26,6 +28,15 @@ if (!fs.existsSync(dbPath)) {
 const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
 
 async function migrate() {
+    console.log("🔐 Authenticating as admin...");
+    try {
+        await signInWithEmailAndPassword(auth, "SWEETO@SWEETO.COM", "chibuikekene");
+        console.log("✅ Authenticated successfully");
+    } catch (authError) {
+        console.error("❌ Authentication failed:", authError.message);
+        process.exit(1);
+    }
+
     console.log("🚀 Starting migration to Firestore...");
 
     try {

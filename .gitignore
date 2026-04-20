@@ -31,3 +31,6 @@ dist-ssr
 # Scratch/test files
 scratch/
 test_format.js
+
+.vercel
+.env*.local

@@ -18,7 +18,8 @@ const WhatsAppButton = ({ product, iconOnly = false, className = '' }) => {
     whatsappNumber, 
     product.name, 
     formatPrice(product.price),
-    shopName
+    shopName,
+    product.image
   );
 
   if (!waLink) return null;

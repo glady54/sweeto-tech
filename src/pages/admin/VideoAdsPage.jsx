@@ -22,6 +22,7 @@ const VideoAdsPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeUpload, setActiveUpload] = useState(null);
+  const [detectedDuration, setDetectedDuration] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,15 +32,49 @@ const VideoAdsPage = () => {
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // 1. Basic Format/Size Validation
     if (!file.type.startsWith('video/')) {
       setError('Please upload a valid video file (mp4, webm).');
       return;
     }
-    if (file.size > 50 * 1024 * 1024) { 
-      setError('Video is too large. Please upload an advert under 50MB.');
+    if (file.size > 100 * 1024 * 1024) { 
+      setError('Video is too large. Please upload an advert under 100MB.');
       return;
     }
 
+    // 2. Duration Extraction & Validation
+    const videoUrl = URL.createObjectURL(file);
+    const videoElement = document.createElement('video');
+    videoElement.preload = 'metadata';
+    videoElement.src = videoUrl;
+
+    videoElement.onloadedmetadata = () => {
+      const duration = videoElement.duration;
+      setDetectedDuration(duration);
+      URL.revokeObjectURL(videoUrl);
+
+      // Check Duration Limits (1s to 50s)
+      if (duration < 1) {
+        setError('Video is too short. Adverts must be at least 1 second.');
+        return;
+      }
+      if (duration > 50.5) { // Allow slight margin for rounding
+        setError(`Video is too long (${Math.round(duration)}s). Adverts must be 50 seconds or less.`);
+        return;
+      }
+
+      // 3. Start Upload if valid
+      startUpload(file);
+    };
+
+    videoElement.onerror = () => {
+      setError('Could not read video metadata. The format might be unsupported or corrupted.');
+      URL.revokeObjectURL(videoUrl);
+    };
+  };
+
+  const startUpload = (file) => {
     setIsUploading(true);
     setUploadProgress(0);
     setError('');
@@ -226,6 +261,11 @@ const VideoAdsPage = () => {
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
                     <CheckCircle2 size={40} className="text-green-400 mb-2" />
                     <span className="text-white text-[10px] font-black uppercase tracking-widest">Video Ready</span>
+                    {detectedDuration && (
+                      <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest mt-1 italic">
+                        {detectedDuration.toFixed(1)}s Recorded
+                      </span>
+                    )}
                   </div>
                   <button type="button" onClick={() => setFormData(p => ({ ...p, videoUrl: '' }))} className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg text-[10px] font-bold uppercase z-10 transition-colors shadow-lg">
                     Change

@@ -153,6 +153,10 @@ export const StoreDataProvider = ({ children }) => {
     await adjustStock(record.productId, 'decrease', record.quantitySold);
   };
 
+  const deleteSaleRecord = async (id) => {
+    await deleteDoc(doc(db, 'salesRecords', id));
+  };
+
   // ─── CATEGORY ACTIONS ────────────────────────────────────────────────────────
   const addCategory = async (category) => {
     const now = new Date().toISOString();
@@ -229,7 +233,7 @@ export const StoreDataProvider = ({ children }) => {
     products, categories, storeSettings, stockAdjustments, salesRecords, visits, videoAds,
     loading,
     addProduct, updateProduct, deleteProduct,
-    adjustStock, addSaleRecord,
+    adjustStock, addSaleRecord, deleteSaleRecord,
     addCategory, updateCategory, deleteCategory,
     addVideoAd, deleteVideoAd,
     updateStoreSettings,

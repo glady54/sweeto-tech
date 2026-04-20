@@ -3,7 +3,17 @@ import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { compressImage } from '../../utils/imageCompressor';
 import { uploadToStorage } from '../../utils/firebaseStorage';
-import { Loader2 } from 'lucide-react';
+import { 
+  Loader2, 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Save, 
+  X, 
+  Image as ImageIcon, 
+  AlertCircle, 
+  Tag 
+} from 'lucide-react';
 
 const CategoryManagerPage = () => {
   const { categories, addCategory, deleteCategory, updateCategory } = useStoreData();
@@ -63,9 +73,16 @@ const CategoryManagerPage = () => {
     setError('');
     setSuccess('');
 
-    if (!categoryName.trim()) {
-      setError('Category name is required');
-      return;
+    if (categoryName.trim()) {
+      const isDuplicate = categories.some(c => 
+        c.name.toLowerCase() === categoryName.trim().toLowerCase() && 
+        (!editingCategory || c.id !== editingCategory.id)
+      );
+
+      if (isDuplicate) {
+        setError(`A category named "${categoryName.trim()}" already exists. Please use a unique name.`);
+        return;
+      }
     }
 
     const categoryData = {
@@ -91,14 +108,23 @@ const CategoryManagerPage = () => {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this category?')) return;
+    
     setError('');
-    const result = deleteCategory(id);
-    if (!result.success) {
-      setError(result.error);
-    } else {
-      setSuccess('Category deleted successfully!');
-      setTimeout(() => setSuccess(''), 3000);
+    setSuccess('');
+    
+    try {
+      const result = await deleteCategory(id);
+      if (!result.success) {
+        setError(result.error);
+      } else {
+        setSuccess('Category deleted successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      console.error("Delete category error:", err);
+      setError("An unexpected error occurred during deletion.");
     }
   };
 
@@ -161,8 +187,12 @@ const CategoryManagerPage = () => {
                 className="w-full px-5 py-4 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none text-gray-900 dark:text-white font-medium"
               >
                 <option value="">None (Top-Level)</option>
-                <option value="Computers">Computers</option>
-                <option value="Accessories">Accessories</option>
+                {categories
+                  .filter(c => !editingCategory || c.id !== editingCategory.id) // Cannot be own parent
+                  .map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))
+                }
               </select>
             </div>
             <div className="flex-1">

@@ -3,7 +3,7 @@
  * so they persist in the cloud even when the computer is off.
  */
 
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const analyticsService = {
@@ -45,31 +45,85 @@ const analyticsService = {
   },
 
   /**
+   * Derives the browser name from the user agent
+   */
+  getBrowser: () => {
+    const ua = navigator.userAgent;
+    if (ua.includes('Firefox')) return 'Firefox';
+    if (ua.includes('SamsungBrowser')) return 'Samsung Browser';
+    if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera';
+    if (ua.includes('Edge')) return 'Edge';
+    if (ua.includes('Chrome')) return 'Chrome';
+    if (ua.includes('Safari')) return 'Safari';
+    return 'Other';
+  },
+
+  /**
    * Logs a page visit to Firestore. De-duplicated per session per path.
    * @param {string} path - The page path visited
+   * @param {object} userInfo - Optional user info (if logged in)
    */
-  logVisit: async (path) => {
+  logVisit: async (path, userInfo = null) => {
+    const currentPath = path || window.location.pathname;
     const loggedPaths = JSON.parse(sessionStorage.getItem('logged_paths') || '[]');
-    if (loggedPaths.includes(path)) return; // Already logged this path in session
+    
+    // Check if recently logged (prevent double logging on strict mode)
+    if (loggedPaths.includes(currentPath)) return;
 
     try {
+      // Fetch location data (Country)
+      let country = 'Unknown';
+      try {
+        const locResponse = await fetch('https://ipapi.co/json/');
+        if (locResponse.ok) {
+          const locData = await locResponse.json();
+          country = locData.country_name || 'Unknown';
+        }
+      } catch (e) {
+        console.warn('Analytics: Could not fetch location');
+      }
+
+      const startTime = Date.now();
       const visitData = {
         sessionId: analyticsService.getSessionId(),
-        path: path || window.location.pathname,
+        path: currentPath,
         referrer: document.referrer || '',
         referrerSource: analyticsService.getReferrerSource(),
         device: analyticsService.getDeviceType(),
+        browser: analyticsService.getBrowser(),
         language: navigator.language,
+        country: country,
+        user: userInfo ? (userInfo.displayName || userInfo.email || 'User') : 'Guest',
         screenSize: `${window.innerWidth}x${window.innerHeight}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        duration: 0
       };
 
-      await addDoc(collection(db, 'visits'), visitData);
+      const docRef = await addDoc(collection(db, 'visits'), visitData);
+      const visitId = docRef.id;
+      
+      // Heartbeat: Update duration every 20 seconds
+      const heartbeatInterval = setInterval(async () => {
+        try {
+          const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+          await updateDoc(doc(db, 'visits', visitId), { duration: durationSeconds });
+        } catch (e) {
+          console.error('Analytics: Heartbeat update failed', e);
+          clearInterval(heartbeatInterval);
+        }
+      }, 20000);
 
-      loggedPaths.push(path);
+      // Final attempt on leave
+      window.addEventListener('beforeunload', () => {
+        clearInterval(heartbeatInterval);
+        const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+        // We use the last heartbeat's knowledge, but we can't reliably await here
+        // Some browsers allow fetch with keepalive or navigator.sendBeacon for this
+      }, { once: true });
+
+      loggedPaths.push(currentPath);
       sessionStorage.setItem('logged_paths', JSON.stringify(loggedPaths));
     } catch (error) {
-      // Fail silently — analytics should never break the app
       console.error('Analytics: failed to log visit:', error);
     }
   }

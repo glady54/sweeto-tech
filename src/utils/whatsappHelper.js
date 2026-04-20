@@ -62,3 +62,39 @@ export const getInquiryWhatsAppLink = (phone, productName, shopName = 'SWEETO-HU
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 };
+
+/**
+ * Helper to generate a WhatsApp link for the entire cart
+ * @param {string} phone - The WhatsApp number
+ * @param {Array} items - Array of cart items
+ * @param {number} total - Total price
+ * @param {string} shopName - Name of the shop
+ * @param {function} formatPrice - Price formatter function
+ * @returns {string} - The WhatsApp URL
+ */
+export const getCartWhatsAppLink = (phone, items, total, shopName = 'SWEETO-HUB', formatPrice) => {
+  if (!phone || !items || items.length === 0) return null;
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  let message = '';
+
+  // Add the first item's image at the top to trigger WhatsApp preview
+  if (items[0].image && items[0].image.startsWith('http')) {
+    message += `${items[0].image}\n\n`;
+  }
+
+  message += `*📦 NEW ORDER - ${shopName.toUpperCase()}*\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `*Items:*\n`;
+
+  items.forEach(item => {
+    message += `• ${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
+  });
+
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `*Total Amount: ${formatPrice(total)}*\n\n`;
+  message += `_Generated via Sweeto-Tech Storefront_`;
+
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+};

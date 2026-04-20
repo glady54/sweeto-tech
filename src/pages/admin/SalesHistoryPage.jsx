@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
-import { ShoppingCart, Search, Plus, X, Calendar, Receipt } from 'lucide-react';
+import { ShoppingCart, Search, Plus, X, Calendar, Receipt, Trash2 } from 'lucide-react';
 
 // Shared modal backdrop — defined OUTSIDE the component to avoid re-creation on every render
 const Backdrop = ({ children, onClose }) => (
@@ -14,7 +14,7 @@ const Backdrop = ({ children, onClose }) => (
 
 const SalesHistoryPage = () => {
   const { t } = useAdminLocale();
-  const { salesRecords, products, addSaleRecord, formatPrice } = useStoreData();
+  const { salesRecords, products, addSaleRecord, deleteSaleRecord, formatPrice } = useStoreData();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -171,6 +171,7 @@ const SalesHistoryPage = () => {
                     <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">{t('totalPrice')}</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">{t('customer')}</th>
                     <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">{t('saleDate')}</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,6 +187,19 @@ const SalesHistoryPage = () => {
                         {r.customerContact && <p className="text-[10px] text-gray-400 dark:text-slate-500">{r.customerContact}</p>}
                       </td>
                       <td className="px-6 py-4 text-right text-xs font-mono text-gray-400 dark:text-slate-500">{new Date(r.saleDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this sale record?')) {
+                              deleteSaleRecord(r.id);
+                            }
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
+                          title="Delete Record"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

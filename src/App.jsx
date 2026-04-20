@@ -9,7 +9,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { LocaleProvider } from './contexts/LocaleContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { AdminLocaleProvider } from './contexts/AdminLocaleContext';
-import { UserAuthProvider } from './contexts/UserAuthContext'; // Customer Authentication
+import { UserAuthProvider, useUserAuth } from './contexts/UserAuthContext'; // Customer Authentication
 
 // Analytics
 import analyticsService from './utils/analyticsService';
@@ -47,13 +47,14 @@ import VideoAdsPage from './pages/admin/VideoAdsPage';
 
 const AnalyticsTracker = () => {
   const location = useLocation();
+  const { user } = useUserAuth();
 
   useEffect(() => {
     // Only log paths that are not the admin panel
     if (!location.pathname.startsWith('/admin')) {
-      analyticsService.logVisit(location.pathname);
+      analyticsService.logVisit(location.pathname, user);
     }
-  }, [location]);
+  }, [location, user]);
 
   return null;
 };

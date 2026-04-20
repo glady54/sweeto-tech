@@ -4,14 +4,53 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { LogOut, Globe, Settings, Package, Grid3x3, Home, Sun, Moon, Warehouse, Receipt, MousePointer2, Video } from 'lucide-react';
+import { LogOut, Globe, Settings, Package, Grid3x3, Home, Sun, Moon, Warehouse, Receipt, MousePointer2, Video, Bell, X, AlertTriangle, TrendingUp } from 'lucide-react';
 
 const AdminHeader = () => {
   const { user, logout } = useAdminAuth();
   const { t, language, toggleLanguage } = useAdminLocale();
-  const { storeSettings } = useStoreData();
+  const { storeSettings, products, salesRecords } = useStoreData();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
+  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
+
+  // Derive notifications
+  const notifications = React.useMemo(() => {
+    const alerts = [];
+    
+    // Low Stock Alerts
+    products.forEach(p => {
+      if ((p.stockQuantity || 0) < 5) {
+        alerts.push({
+          id: `stock-${p.id}`,
+          type: 'stock',
+          title: 'Low Stock Alert',
+          message: `${p.name} is running low (${p.stockQuantity} left)`,
+          date: new Date(),
+          severity: 'high'
+        });
+      }
+    });
+
+    // Recent Sales Alerts (Last 12 hours)
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    salesRecords.forEach(s => {
+      if (new Date(s.saleDate) > twelveHoursAgo) {
+        alerts.push({
+          id: `sale-${s.id}`,
+          type: 'sale',
+          title: 'New Sale Recorded',
+          message: `${s.quantitySold}x ${s.productName} sold to ${s.customerName || 'Customer'}`,
+          date: new Date(s.saleDate),
+          severity: 'info'
+        });
+      }
+    });
+
+    return alerts.sort((a, b) => b.date - a.date);
+  }, [products, salesRecords]);
+
+  const hasNotifications = notifications.length > 0;
 
   const handleLogout = () => {
     logout();
@@ -48,7 +87,7 @@ const AdminHeader = () => {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center bg-gray-50/50 dark:bg-slate-950/50 p-1.5 rounded-2xl border border-gray-100 dark:border-slate-800/50">
-            {[
+            { [
               { to: '/admin/dashboard', icon: Home, label: t('dashboard') },
               { to: '/admin/products', icon: Package, label: t('productManagement') },
               { to: '/admin/categories', icon: Grid3x3, label: t('categoryManagement') },
@@ -61,9 +100,9 @@ const AdminHeader = () => {
               <Link
                 key={item.to}
                 to={item.to}
-                className="flex items-center px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-900 transition-all active:scale-95"
+                className="flex items-center px-3 xl:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-900 transition-all active:scale-95 whitespace-nowrap"
               >
-                <item.icon size={16} className="mr-2" />
+                <item.icon size={14} className="mr-1.5" />
                 {item.label}
               </Link>
             ))}
@@ -92,6 +131,68 @@ const AdminHeader = () => {
                 <Globe size={16} className="mr-1.5 text-blue-500" />
                 {language === 'en' ? 'EN' : 'FR'}
               </button>
+            </div>
+
+            {/* Notifications Bell */}
+            <div className="relative mr-2">
+              <button
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className={`p-3 relative rounded-2xl transition-all active:scale-95 ${
+                  isNotificationsOpen 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                    : 'bg-gray-50 dark:bg-slate-950 text-gray-500 dark:text-slate-400 border border-gray-100 dark:border-slate-800'
+                }`}
+              >
+                <Bell size={18} className={hasNotifications && !isNotificationsOpen ? 'animate-bounce' : ''} />
+                {hasNotifications && (
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotificationsOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsNotificationsOpen(false)} />
+                  <div className="absolute top-14 right-0 w-80 bg-white dark:bg-slate-900 shadow-2xl border border-gray-100 dark:border-slate-800 rounded-[2rem] overflow-hidden z-50 animate-ai-zoom-in">
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-950/50">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">Notifications</h3>
+                      <button onClick={() => setIsNotificationsOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    
+                    <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
+                      {notifications.length === 0 ? (
+                        <div className="p-10 text-center">
+                          <Bell size={32} className="mx-auto mb-3 text-gray-200 dark:text-slate-800" />
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">All caught up!</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-50 dark:divide-slate-800/50">
+                          {notifications.map((n) => (
+                            <div key={n.id} className="p-5 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                              <div className="flex gap-3">
+                                <div className={`mt-1 p-2 rounded-xl shrink-0 ${
+                                  n.type === 'stock' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
+                                }`}>
+                                  {n.type === 'stock' ? <AlertTriangle size={14} /> : <TrendingUp size={14} />}
+                                </div>
+                                <div>
+                                  <p className="text-[11px] font-black uppercase tracking-tight text-gray-900 dark:text-white mb-0.5">{n.title}</p>
+                                  <p className="text-xs text-gray-500 dark:text-slate-400 leading-snug mb-1.5">{n.message}</p>
+                                  <p className="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase italic">
+                                    {new Date(n.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="h-10 w-px bg-gray-100 dark:bg-slate-800 hidden sm:block mx-2" />

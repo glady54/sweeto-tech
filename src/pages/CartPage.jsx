@@ -3,44 +3,27 @@ import { useCart } from '../contexts/CartContext';
 import { useStoreData } from '../contexts/StoreDataContext';
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getWhatsAppLink } from '../utils/whatsappHelper';
+import { getCartWhatsAppLink } from '../utils/whatsappHelper';
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
   const { formatPrice, storeSettings } = useStoreData();
 
   const handleWhatsAppCheckout = () => {
-    // Collect all items for the message
-    let itemsText = '';
-    cartItems.forEach(item => {
-      itemsText += `${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
-    });
-
     const shopName = storeSettings.shopName || 'SWEETO-HUB';
-    const phone = storeSettings.whatsappNumber || '237699999999'; // Fallback
+    const phone = storeSettings.whatsappNumber || '237699999999';
     
-    // For cart checkout, we use a slightly different summary
-    let message = '';
-    
-    // Add the first item's image at the top to trigger WhatsApp preview
-    if (cartItems.length > 0 && cartItems[0].image && cartItems[0].image.startsWith('http')) {
-      message += `${cartItems[0].image}\n\n`;
+    const whatsappUrl = getCartWhatsAppLink(
+      phone,
+      cartItems,
+      cartTotal,
+      shopName,
+      formatPrice
+    );
+
+    if (whatsappUrl) {
+      window.open(whatsappUrl, '_blank');
     }
-
-    message += `*📦 NEW ORDER - ${shopName.toUpperCase()}*\n`;
-    message += `━━━━━━━━━━━━━━━━━━\n`;
-    message += `*Items:*\n`;
-    
-    cartItems.forEach(item => {
-      message += `• ${item.name} (x${item.quantity}) - ${formatPrice(item.price * item.quantity)}\n`;
-    });
-    
-    message += `━━━━━━━━━━━━━━━━━━\n`;
-    message += `*Total Amount: ${formatPrice(cartTotal)}*\n\n`;
-    message += `_Generated via Sweeto-Tech Storefront_`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodedMessage}`, '_blank');
   };
 
   if (cartItems.length === 0) {

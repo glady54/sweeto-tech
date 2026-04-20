@@ -102,7 +102,7 @@ const TrendingProducts = () => {
                 >
                   <ShoppingCart size={18} />
                 </button>
-                <WhatsAppButton product={product} iconOnly={true} />
+                <WhatsAppButton product={product} iconOnly={true} type="inquiry" />
               </div>
 
               {/* Badge */}

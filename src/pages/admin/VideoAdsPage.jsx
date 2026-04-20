@@ -21,6 +21,7 @@ const VideoAdsPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [activeUpload, setActiveUpload] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -34,7 +35,7 @@ const VideoAdsPage = () => {
       setError('Please upload a valid video file (mp4, webm).');
       return;
     }
-    if (file.size > 50 * 1024 * 1024) { // 50MB limit 
+    if (file.size > 50 * 1024 * 1024) { 
       setError('Video is too large. Please upload an advert under 50MB.');
       return;
     }
@@ -43,33 +44,56 @@ const VideoAdsPage = () => {
     setUploadProgress(0);
     setError('');
     
-    // Create reference in Firebase Storage under marketing-videos folder
-    const storageRef = ref(storage, `marketing-videos/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const storageRef = ref(storage, `marketing-videos/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      setActiveUpload(uploadTask);
 
-    uploadTask.on('state_changed', 
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(Math.round(progress));
-      }, 
-      (err) => {
-        console.error('Video upload error:', err);
-        setError('Video upload failed. Check your network or Firebase rules.');
-        setIsUploading(false);
-      }, 
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setFormData(prev => ({ ...prev, videoUrl: downloadURL }));
-          setSuccess('Video successfully uploaded to cloud storage!');
-          setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-          setError('Failed to get download URL.');
-        } finally {
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        }, 
+        (err) => {
+          console.error('Video upload error:', err);
+          setActiveUpload(null);
           setIsUploading(false);
+          
+          if (err.code === 'storage/unauthorized') {
+            setError('Permission Denied: Firebase storage rules are blocking this upload.');
+          } else if (err.code === 'storage/canceled') {
+            setError('Upload was canceled.');
+          } else {
+            setError(`Upload failed: ${err.message}`);
+          }
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            setFormData(prev => ({ ...prev, videoUrl: downloadURL }));
+            setSuccess('Video successfully uploaded to cloud storage!');
+            setTimeout(() => setSuccess(''), 3000);
+          } catch (urlErr) {
+            setError('Failed to get download URL after upload.');
+          } finally {
+            setActiveUpload(null);
+            setIsUploading(false);
+          }
         }
-      }
-    );
+      );
+    } catch (startErr) {
+      setError(`Fatal: Could not initialize upload task. ${startErr.message}`);
+      setIsUploading(false);
+    }
+  };
+
+  const cancelUpload = () => {
+    if (activeUpload) {
+      activeUpload.cancel();
+      setActiveUpload(null);
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -176,9 +200,16 @@ const VideoAdsPage = () => {
                       <>
                         <Loader2 size={32} className="animate-spin mb-3 text-pink-500" />
                         <span className="text-xs font-black uppercase tracking-widest text-pink-600">Uploading {uploadProgress}%</span>
-                        <div className="w-1/2 bg-gray-200 dark:bg-slate-800 rounded-full h-1 mt-3">
+                        <div className="w-1/2 bg-gray-200 dark:bg-slate-800 rounded-full h-1 mt-3 overflow-hidden">
                           <div className="bg-pink-500 h-1 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                         </div>
+                        <button 
+                          type="button" 
+                          onClick={cancelUpload}
+                          className="mt-4 px-4 py-1.5 bg-white dark:bg-slate-900 border border-pink-200 text-pink-600 text-[10px] font-black uppercase rounded-full hover:bg-pink-50 transition-all"
+                        >
+                          Cancel Upload
+                        </button>
                       </>
                     ) : (
                       <>

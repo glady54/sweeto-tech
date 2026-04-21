@@ -3,7 +3,7 @@ import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Plus, Package, Trash2, Edit, AlertCircle, CheckCircle2, Image as ImageIcon, X, Sparkles, Loader2, Check } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadToStorage } from '../../utils/firebaseStorage';
+import { uploadToStorage } from '../../utils/supabaseStorage';
 import { generateAIProductDescription } from '../../utils/aiService';
 
 const ProductManagerPage = () => {

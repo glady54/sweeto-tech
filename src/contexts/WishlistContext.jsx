@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUserAuth } from './UserAuthContext';
-import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 const WishlistContext = createContext();
 
@@ -18,7 +17,7 @@ export const WishlistProvider = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useUserAuth();
 
-  // Load wishlist from localStorage or Firestore on mount/login
+  // Load wishlist from localStorage or Supabase on mount/login
   useEffect(() => {
     const loadWishlist = async () => {
       setIsLoaded(false);
@@ -34,11 +33,14 @@ export const WishlistProvider = ({ children }) => {
 
       if (user && user.email !== 'sweeto@sweeto.com') {
         try {
-          const docRef = doc(db, 'customerWishlists', user.uid);
-          const docSnap = await getDoc(docRef);
+          const { data, error } = await supabase
+            .from('customer_data')
+            .select('wishlist')
+            .eq('user_id', user.id)
+            .single();
           
-          if (docSnap.exists()) {
-            const cloudWishlist = docSnap.data().items || [];
+          if (data) {
+            const cloudWishlist = data.wishlist || [];
             
             // Basic Merge: If local exists, prioritize it and sync it up
             if (localWishlist.length > 0) {
@@ -47,6 +49,7 @@ export const WishlistProvider = ({ children }) => {
               setWishlistItems(cloudWishlist);
             }
           } else {
+            // New user, ensured data row exists in Cart migration but we'll upsert here too
             setWishlistItems(localWishlist);
           }
         } catch (error) {
@@ -64,7 +67,7 @@ export const WishlistProvider = ({ children }) => {
 
   // Save wishlist to localStorage OR cloud when it changes
   useEffect(() => {
-    if (!isLoaded) return; // Prevent overwriting cloud with empty state on login
+    if (!isLoaded) return; 
 
     if (wishlistItems.length > 0 || localStorage.getItem('wishlist')) {
       localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
@@ -74,7 +77,9 @@ export const WishlistProvider = ({ children }) => {
     if (user && user.email !== 'sweeto@sweeto.com') {
       const syncToCloud = async () => {
         try {
-          await setDoc(doc(db, 'customerWishlists', user.uid), { items: wishlistItems });
+          await supabase
+            .from('customer_data')
+            .upsert({ user_id: user.id, wishlist: wishlistItems, updated_at: new Date().toISOString() });
         } catch (error) {
           console.error("Error syncing wishlist to cloud:", error);
         }

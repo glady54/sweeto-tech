@@ -3,7 +3,7 @@ import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Settings, Save, Globe, Banknote, Mail, Info, Image as ImageIcon, Plus, Sparkles, ExternalLink, Loader2, MessageSquare, Phone, MapPin, Share2, Camera, MessageCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadToStorage } from '../../utils/firebaseStorage';
+import { uploadToStorage } from '../../utils/supabaseStorage';
 import { testGeminiConnection } from '../../utils/aiService';
 
 const StoreSettingsPage = () => {

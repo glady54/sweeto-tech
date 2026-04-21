@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Video, Plus, Trash2, Link as LinkIcon, Loader2, CheckCircle2, AlertCircle, PlaySquare } from 'lucide-react';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
+import { uploadToStorage } from '../../utils/supabaseStorage';
 
 const VideoAdsPage = () => {
   const { videoAds, products, addVideoAd, deleteVideoAd, storeSettings } = useStoreData();
@@ -19,10 +18,9 @@ const VideoAdsPage = () => {
   });
 
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0); // Kept for UI compatibility, though Supabase utility is currently simple
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [activeUpload, setActiveUpload] = useState(null);
   const [detectedDuration, setDetectedDuration] = useState(null);
 
   const handleInputChange = (e) => {
@@ -96,83 +94,32 @@ const VideoAdsPage = () => {
     videoElement.src = objectUrl;
   };
 
-  const startUpload = (file) => {
+  const startUpload = async (file) => {
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(10); // Initial progress indicator
     setError('');
     
     try {
-      const storageRef = ref(storage, `marketing-videos/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-      setActiveUpload(uploadTask);
-
-      // ─── Watchdog: if no bytes transfer in 30s, cancel & diagnose ───────────
-      let lastBytesTransferred = -1;
-      const watchdog = setTimeout(() => {
-        if (uploadTask.snapshot.bytesTransferred === 0) {
-          uploadTask.cancel();
-          setIsUploading(false);
-          setActiveUpload(null);
-          setError(
-            'Upload timed out with 0 bytes sent. Please check: ' +
-            '(1) Firebase Storage is enabled in the Firebase Console, ' +
-            '(2) Storage security rules allow writes, ' +
-            '(3) Your internet connection is working.'
-          );
-        }
-      }, 30000);
-
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(Math.round(progress));
-          // If bytes are moving, watchdog is no longer needed
-          if (snapshot.bytesTransferred > 0) clearTimeout(watchdog);
-        }, 
-        (err) => {
-          clearTimeout(watchdog);
-          console.error('Video upload error:', err);
-          setActiveUpload(null);
-          setIsUploading(false);
-          
-          if (err.code === 'storage/unauthorized') {
-            setError('Permission Denied: Go to Firebase Console → Storage → Rules and allow writes for admin users.');
-          } else if (err.code === 'storage/canceled') {
-            setError('Upload was canceled.');
-          } else if (err.code === 'storage/unknown') {
-            setError('Unknown Storage error. Make sure Firebase Storage is enabled in your Firebase Console (Build → Storage).');
-          } else {
-            setError(`Upload failed: ${err.message}`);
-          }
-        }, 
-        async () => {
-          clearTimeout(watchdog);
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            setFormData(prev => ({ ...prev, videoUrl: downloadURL }));
-            setSuccess('Video successfully uploaded to cloud storage!');
-            setTimeout(() => setSuccess(''), 3000);
-          } catch (urlErr) {
-            setError('Failed to get download URL after upload.');
-          } finally {
-            setActiveUpload(null);
-            setIsUploading(false);
-          }
-        }
-      );
-    } catch (startErr) {
-      setError(`Fatal: Could not initialize upload task. ${startErr.message}`);
+      const folder = 'marketing-videos';
+      setUploadProgress(50); // Simulate progress as we don't have a progress callback in the utility yet
+      const downloadURL = await uploadToStorage(file, folder);
+      
+      setFormData(prev => ({ ...prev, videoUrl: downloadURL }));
+      setUploadProgress(100);
+      setSuccess('Video successfully uploaded to Supabase storage!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Video upload error:', err);
+      setError(`Upload failed: ${err.message || 'Unknown error. Check Storage permissions.'}`);
+    } finally {
       setIsUploading(false);
     }
   };
 
   const cancelUpload = () => {
-    if (activeUpload) {
-      activeUpload.cancel();
-      setActiveUpload(null);
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
+    // Current Supabase utility doesn't support cancellation easily without AbortController
+    setIsUploading(false);
+    setUploadProgress(0);
   };
 
   const handleSubmit = async (e) => {

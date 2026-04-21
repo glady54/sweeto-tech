@@ -1,40 +1,83 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /**
+ * Converts an image URL to a Base64 data URL.
+ * Required for Gemini AI to process images that have already been uploaded to storage.
+ * 
+ * @param {string} url - The URL of the image to convert.
+ * @returns {Promise<{base64: string, mimeType: string}>}
+ */
+export const imageUrlToBase64 = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+    
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64data = reader.result;
+        const mimeType = blob.type || 'image/jpeg';
+        // Extract the raw base64 data (without the data:image/xxx;base64, prefix)
+        const base64Raw = base64data.split(',')[1];
+        resolve({ base64: base64Raw, mimeType });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Error converting URL to Base64:", error);
+    if (error.message.includes('CORS')) {
+      throw new Error('IMAGE_FETCH_CORS_ERROR');
+    }
+    throw new Error(`IMAGE_FETCH_ERROR: ${error.message}`);
+  }
+};
+
+/**
  * Generates a professional product description based on an image and optional metadata.
  * 
- * @param {string} base64Image - The Base64 data URL of the product image.
+ * @param {string} imageSource - The Base64 data URL OR a public URL of the product image.
  * @param {string} apiKey - The Google Gemini API Key.
  * @param {string} language - The language to generate the description in (e.g., 'en', 'fr').
  * @param {object} metadata - Optional context like product name or category.
  * @param {string} modelName - The Gemini model to use (default: 'gemini-1.5-flash').
  * @returns {Promise<string>} - The generated description.
  */
-export const generateAIProductDescription = async (base64Image, apiKey, language = 'en', metadata = {}, modelName = 'gemini-1.5-flash') => {
+export const generateAIProductDescription = async (imageSource, apiKey, language = 'en', metadata = {}, modelName = 'gemini-1.5-flash') => {
   if (!apiKey) {
     throw new Error('MISSING_API_KEY');
   }
 
-  if (!base64Image) {
+  if (!imageSource) {
     throw new Error('MISSING_IMAGE');
   }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Use the model name provided or fallback
     const model = genAI.getGenerativeModel({ model: modelName || "gemini-1.5-flash" });
 
-    // Clean up the base64 string and extract mimeType
-    const mimeMatch = base64Image.match(/^data:([^;]+);base64,/);
-    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-    const base64Data = base64Image.split(',')[1];
+    let base64Data;
+    let mimeType;
+
+    // Check if imageSource is already a Base64 data URL
+    if (imageSource.startsWith('data:')) {
+      const mimeMatch = imageSource.match(/^data:([^;]+);base64,/);
+      mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      base64Data = imageSource.split(',')[1];
+    } else {
+      // It's likely a URL, fetch and convert it
+      const result = await imageUrlToBase64(imageSource);
+      base64Data = result.base64;
+      mimeType = result.mimeType;
+    }
     
     const prompt = `
       You are a professional e-commerce copywriting expert for a premium electronics store called 'Sweeto-Tech'.
       Analyze the provided image and generate a compelling, high-end product description.
       
       Requirements:
-      - Language: Generate the response completely in ${language === 'fr' ? 'French' : 'English'}.
+      - Language: Generate the response completely in ${language === 'fr' ? 'French' : 'Spanish' ? language === 'es' ? 'Spanish' : 'English' : 'English'}.
       - Content: Focus on features, benefits for the user, and tech specs if visible.
       - Style: Professional, persuasive, and sleek.
       - Formatting: Use concise paragraphs. Avoid bullet points if possible, but keep it readable.
@@ -58,6 +101,10 @@ export const generateAIProductDescription = async (base64Image, apiKey, language
   } catch (error) {
     console.error("AI Generation Error Details:", error);
     
+    if (error.message === 'IMAGE_FETCH_CORS_ERROR') {
+      throw new Error('AI_GEN_ERROR: The image could not be loaded due to security (CORS) restrictions. Please ensure your storage bucket allows requests from this domain.');
+    }
+
     const errorMessage = error.message?.toLowerCase() || '';
     
     if (errorMessage.includes('api key not valid') || errorMessage.includes('invalid api key')) {
@@ -77,34 +124,7 @@ export const generateAIProductDescription = async (base64Image, apiKey, language
     }
 
     if (errorMessage.includes('not found') || errorMessage.includes('404')) {
-      console.warn("Model not found. Attempting to fetch a list of models your API key has access to...");
-      try {
-        // Use standard fetch to call the REST API as the browser SDK doesn't expose listModels easily
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.models) {
-            console.log("Success! Here are the models available to your API key:");
-            console.table(data.models.map(m => ({ 
-              name: m.name.replace('models/', ''), 
-              displayName: m.displayName,
-              methods: m.supportedGenerationMethods?.join(', ')
-            })));
-            console.log("Recommended Vision Models: gemini-1.5-flash, gemini-1.5-pro");
-          } else {
-            console.warn("No models returned in metadata. Please verify your project has the 'Generative Language API' enabled in Google Cloud Console.");
-          }
-        } else {
-          console.error(`Failed to list models via REST API (Status: ${response.status}).`);
-          if (response.status === 403) {
-            console.error("This usually means the 'Generative Language API' is not enabled or the key is restricted.");
-          }
-        }
-      } catch (e) {
-        console.error("Network error while listing models:", e);
-      }
-      
-      console.log("TROUBLESHOOTING: Please check your API key in Google AI Studio (aistudio.google.com). Ensure you are using the correct model name (e.g., 'gemini-1.5-flash').");
+      // Re-use logic or log specifically
       throw new Error('AI_MODEL_NOT_FOUND');
     }
 

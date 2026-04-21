@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
@@ -11,9 +11,14 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAdminAuth();
+  const { login, isAuthenticated } = useAdminAuth();
   const { t } = useAdminLocale();
   const navigate = useNavigate();
+
+  // If already logged in, go straight to dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -129,11 +134,10 @@ const LoginPage = () => {
             </div>
           </form>
 
-          {/* Secure Login Note */}
           <div className="mt-10 text-center">
             <div className="inline-block p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/10 border border-slate-100 dark:border-slate-900/20">
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
-                Secured by Military-Grade Firebase Authentication
+                Secured by Supabase Cloud Infrastructure
               </p>
             </div>
           </div>

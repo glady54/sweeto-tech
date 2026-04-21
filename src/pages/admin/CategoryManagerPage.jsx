@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStoreData } from '../../contexts/StoreDataContext';
 import { useAdminLocale } from '../../contexts/AdminLocaleContext';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadToStorage } from '../../utils/firebaseStorage';
+import { uploadToStorage } from '../../utils/supabaseStorage';
 import { 
   Loader2, 
   Plus, 

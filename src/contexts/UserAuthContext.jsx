@@ -1,12 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut as firebaseSignOut, 
-  onAuthStateChanged,
-  updateProfile
-} from 'firebase/auth';
+import { supabase } from '../supabase';
 import LoadingScreen from '../components/LoadingScreen';
 
 const UserAuthContext = createContext();
@@ -28,17 +21,14 @@ export const UserAuthProvider = ({ children }) => {
     const startTime = Date.now();
     const MINIMUM_LOADING_MS = 2000; // 2 seconds
 
-    // Listen to Firebase authentication state for Customers
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser && currentUser.email === 'sweeto@sweeto.com') {
-          // Admin viewing storefront treatment (optional logic)
-      }
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
       setUser(currentUser);
       setIsAuthenticated(!!currentUser);
       
       const elapsed = Date.now() - startTime;
       const remainingTime = MINIMUM_LOADING_MS - elapsed;
-
       if (remainingTime > 0) {
         setTimeout(() => setLoading(false), remainingTime);
       } else {
@@ -46,43 +36,63 @@ export const UserAuthProvider = ({ children }) => {
       }
     });
 
-    return () => unsubscribe();
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      setIsAuthenticated(!!currentUser);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email, password) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
       return { success: true };
     } catch (error) {
       console.error("Customer Login Error:", error);
       let errorMessage = 'Invalid email or password';
-      if (error.code === 'auth/user-not-found') errorMessage = 'Account not found. Please register.';
-      else if (error.code === 'auth/wrong-password') errorMessage = 'Incorrect password.';
-      else if (error.code === 'auth/invalid-credential') errorMessage = 'Invalid email or password.';
-      else if (error.code === 'auth/too-many-requests') errorMessage = 'Too many attempts. Try again later.';
+      if (error.message.includes('Invalid login credentials')) errorMessage = 'Account not found or incorrect password.';
+      else if (error.status === 429) errorMessage = 'Too many attempts. Try again later.';
       return { success: false, error: errorMessage };
     }
   };
 
   const register = async (name, email, password) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name });
-      // Update local state to reflect displayName immediately
-      setUser({ ...userCredential.user, displayName: name });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: name,
+          }
+        }
+      });
+
+      if (error) throw error;
+      
+      // Update local state is handled by onAuthStateChange usually, 
+      // but if email confirmation is required, the user might not be "logged in" yet.
       return { success: true };
     } catch (error) {
       console.error("Customer Registration Error:", error);
       let errorMessage = 'Could not create account';
-      if (error.code === 'auth/email-already-in-use') errorMessage = 'This email is already registered.';
-      else if (error.code === 'auth/weak-password') errorMessage = 'Password must be at least 6 characters.';
+      if (error.message.includes('User already registered')) errorMessage = 'This email is already registered.';
       return { success: false, error: errorMessage };
     }
   };
 
   const logout = async () => {
     try {
-      await firebaseSignOut(auth);
+      await supabase.auth.signOut();
     } catch (error) {
       console.error("Logout Error:", error);
     }

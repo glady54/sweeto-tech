@@ -1,10 +1,4 @@
-/**
- * Analytics Service — writes visits directly to Firebase Firestore
- * so they persist in the cloud even when the computer is off.
- */
-
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 
 const analyticsService = {
   /**
@@ -59,7 +53,7 @@ const analyticsService = {
   },
 
   /**
-   * Logs a page visit to Firestore. De-duplicated per session per path.
+   * Logs a page visit to Supabase. De-duplicated per session per path.
    * @param {string} path - The page path visited
    * @param {object} userInfo - Optional user info (if logged in)
    */
@@ -85,28 +79,27 @@ const analyticsService = {
 
       const startTime = Date.now();
       const visitData = {
-        sessionId: analyticsService.getSessionId(),
+        session_id: analyticsService.getSessionId(),
         path: currentPath,
         referrer: document.referrer || '',
-        referrerSource: analyticsService.getReferrerSource(),
+        referrer_source: analyticsService.getReferrerSource(),
         device: analyticsService.getDeviceType(),
         browser: analyticsService.getBrowser(),
-        language: navigator.language,
         country: country,
-        user: userInfo ? (userInfo.displayName || userInfo.email || 'User') : 'Guest',
-        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        user_label: userInfo ? (userInfo.user_metadata?.display_name || userInfo.email || 'User') : 'Guest',
         timestamp: new Date().toISOString(),
         duration: 0
       };
 
-      const docRef = await addDoc(collection(db, 'visits'), visitData);
-      const visitId = docRef.id;
+      const { data, error } = await supabase.from('visits').insert([visitData]).select().single();
+      if (error) throw error;
+      const visitId = data.id;
       
       // Heartbeat: Update duration every 20 seconds
       const heartbeatInterval = setInterval(async () => {
         try {
           const durationSeconds = Math.round((Date.now() - startTime) / 1000);
-          await updateDoc(doc(db, 'visits', visitId), { duration: durationSeconds });
+          await supabase.from('visits').update({ duration: durationSeconds }).eq('id', visitId);
         } catch (e) {
           console.error('Analytics: Heartbeat update failed', e);
           clearInterval(heartbeatInterval);
@@ -116,9 +109,6 @@ const analyticsService = {
       // Final attempt on leave
       window.addEventListener('beforeunload', () => {
         clearInterval(heartbeatInterval);
-        const durationSeconds = Math.round((Date.now() - startTime) / 1000);
-        // We use the last heartbeat's knowledge, but we can't reliably await here
-        // Some browsers allow fetch with keepalive or navigator.sendBeacon for this
       }, { once: true });
 
       loggedPaths.push(currentPath);

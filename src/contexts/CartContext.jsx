@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUserAuth } from './UserAuthContext';
-import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 const CartContext = createContext();
 
@@ -14,11 +13,11 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = React.useState([]);
-  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useUserAuth();
 
-  // Load cart from localStorage or Firestore on mount/login
+  // Load cart from localStorage or Supabase on mount/login
   useEffect(() => {
     const loadCart = async () => {
       setIsLoaded(false);
@@ -34,22 +33,26 @@ export const CartProvider = ({ children }) => {
 
       if (user && user.email !== 'sweeto@sweeto.com') {
         try {
-          const docRef = doc(db, 'customerCarts', user.uid);
-          const docSnap = await getDoc(docRef);
+          const { data, error } = await supabase
+            .from('customer_data')
+            .select('cart')
+            .eq('user_id', user.id)
+            .single();
           
-          if (docSnap.exists()) {
-            const cloudCart = docSnap.data().items || [];
+          if (data) {
+            const cloudCart = data.cart || [];
             
             // Basic Merge: If local cart exists, prioritize it and sync it up
             if (localCart.length > 0) {
               setCartItems(localCart);
-              // Will sync to cloud in the next useEffect
             } else {
               setCartItems(cloudCart);
             }
           } else {
-            // New user without a cloud cart yet, keep local
+            // New user without a cloud record yet
             setCartItems(localCart);
+            // Create record
+            await supabase.from('customer_data').insert([{ user_id: user.id, cart: localCart }]);
           }
         } catch (error) {
           console.error("Error fetching cloud cart", error);
@@ -66,7 +69,7 @@ export const CartProvider = ({ children }) => {
 
   // Save cart to localStorage OR cloud when it changes
   useEffect(() => {
-    if (!isLoaded) return; // Prevent overwriting cloud with empty state on login
+    if (!isLoaded) return; 
 
     if (cartItems.length > 0 || localStorage.getItem('cart')) {
       localStorage.setItem('cart', JSON.stringify(cartItems));
@@ -76,7 +79,9 @@ export const CartProvider = ({ children }) => {
     if (user && user.email !== 'sweeto@sweeto.com') {
       const syncToCloud = async () => {
         try {
-          await setDoc(doc(db, 'customerCarts', user.uid), { items: cartItems });
+          await supabase
+            .from('customer_data')
+            .upsert({ user_id: user.id, cart: cartItems, updated_at: new Date().toISOString() });
         } catch (error) {
           console.error("Error syncing cart to cloud:", error);
         }
@@ -84,7 +89,7 @@ export const CartProvider = ({ children }) => {
       
       const debounce = setTimeout(() => {
         syncToCloud();
-      }, 500); // Debounce typing/rapid clicks
+      }, 500);
 
       return () => clearTimeout(debounce);
     }
